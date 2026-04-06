@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Building a Personal Automation Stack — Claude Training</title>
+<style>
+:root { --accent:#C55A11; --light:#FDEBD0; --dark:#6E2E00; }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #1a1a1a; background: #f8f9fa; line-height: 1.7; font-size: 16px; }
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* TOPBAR */
+.topbar { background: var(--accent); color: white; padding: 0 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 56px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+.topbar-left { display: flex; align-items: center; gap: 1rem; }
+.topbar-logo { font-weight: 700; font-size: 1.1rem; letter-spacing: .5px; }
+.topbar-sep { opacity: .4; }
+.topbar-title { font-size: .9rem; opacity: .9; }
+.topbar-home { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+  color: white; padding: .35rem .9rem; border-radius: 6px; font-size: .85rem;
+  cursor: pointer; transition: background .2s; white-space: nowrap; }
+.topbar-home:hover { background: rgba(255,255,255,.25); text-decoration: none; }
+
+/* HERO */
+.hero { background: linear-gradient(135deg, var(--dark) 0%, var(--accent) 100%);
+  color: white; padding: 3.5rem 2rem 2.5rem; text-align: center; }
+.hero-label { font-size: .8rem; text-transform: uppercase; letter-spacing: 2px;
+  opacity: .7; margin-bottom: .5rem; }
+.hero-num { font-size: 1rem; opacity: .8; margin-bottom: .25rem; }
+.hero-title { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; margin-bottom: .5rem; }
+.hero-sub { font-size: 1.05rem; opacity: .8; margin-bottom: 1.5rem; }
+.hero-pills { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+.pill { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+  padding: .3rem .85rem; border-radius: 20px; font-size: .82rem; }
+
+/* LAYOUT */
+.layout { display: grid; grid-template-columns: 260px 1fr; max-width: 1100px;
+  margin: 2rem auto; gap: 2rem; padding: 0 1.5rem 4rem; }
+@media(max-width:768px){.layout{grid-template-columns:1fr;}.sidenav{display:none;}}
+
+/* SIDENAV */
+.sidenav { position: sticky; top: 72px; align-self: start;
+  background: white; border-radius: 12px; padding: 1.25rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08); max-height: calc(100vh - 90px); overflow-y: auto; }
+.sidenav-title { font-size: .7rem; text-transform: uppercase; letter-spacing: 1.5px;
+  color: #888; margin-bottom: .75rem; font-weight: 600; }
+.sidenav ul { list-style: none; }
+.sidenav li { margin-bottom: .1rem; }
+.sidenav a { display: block; padding: .4rem .75rem; border-radius: 6px; font-size: .875rem;
+  color: #444; transition: all .15s; }
+.sidenav a:hover { background: var(--light); color: var(--accent); text-decoration: none; }
+.sidenav .mod-link { font-weight: 600; color: #222; }
+.sidenav .sub-link { padding-left: 1.25rem; font-size: .83rem; color: #666; }
+
+/* CONTENT */
+.content { min-width: 0; }
+.module { background: white; border-radius: 12px; padding: 2rem 2.25rem;
+  margin-bottom: 1.75rem; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+.module-label { font-size: .7rem; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--accent); font-weight: 700; margin-bottom: .25rem; }
+.module h2 { font-size: 1.4rem; font-weight: 700; color: var(--dark); margin-bottom: 1rem;
+  padding-bottom: .6rem; border-bottom: 2px solid var(--light); }
+.module h3 { font-size: 1.05rem; font-weight: 700; color: var(--accent);
+  margin: 1.5rem 0 .6rem; }
+.module p { margin-bottom: .85rem; color: #333; }
+.module ul, .module ol { padding-left: 1.4rem; margin-bottom: .85rem; }
+.module li { margin-bottom: .4rem; color: #333; }
+
+/* CALLOUT */
+.callout { background: var(--light); border-left: 4px solid var(--accent);
+  border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; margin: 1.25rem 0; }
+.callout-label { font-weight: 700; font-size: .9rem; color: var(--dark); margin-bottom: .4rem; }
+.callout p { margin-bottom: 0; font-size: .92rem; }
+
+/* TABLE */
+.tbl-wrap { overflow-x: auto; margin: 1.25rem 0; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+thead tr { background: var(--accent); color: white; }
+thead th { padding: .65rem 1rem; text-align: left; font-weight: 600; }
+tbody tr:nth-child(odd) { background: var(--light); }
+tbody tr:nth-child(even) { background: white; }
+tbody td { padding: .55rem 1rem; border-bottom: 1px solid #e8e8e8; vertical-align: top; }
+tbody td:first-child { font-weight: 600; }
+
+/* EXERCISE */
+.exercise { border: 2px solid var(--light); border-radius: 10px;
+  padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+.exercise-num { font-size: .75rem; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--accent); font-weight: 700; margin-bottom: .3rem; }
+.exercise h4 { font-size: 1rem; font-weight: 700; margin-bottom: .5rem; color: var(--dark); }
+.exercise p { margin: 0; font-size: .92rem; }
+
+/* SUMMARY */
+.summary-box { background: linear-gradient(135deg, var(--dark), var(--accent));
+  color: white; border-radius: 12px; padding: 2rem; margin-top: 1.5rem; }
+.summary-box h2 { color: white; border-bottom-color: rgba(255,255,255,.2); }
+.summary-box ul { color: rgba(255,255,255,.9); }
+.summary-box li { margin-bottom: .5rem; }
+
+/* FOOTER */
+.page-footer { text-align: center; padding: 2rem; color: #888; font-size: .85rem; }
+
+/* INDEX SPECIFIC */
+.index-hero { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: white; padding: 4rem 2rem 3rem; text-align: center; }
+.index-hero h1 { font-size: clamp(2rem,5vw,3.2rem); font-weight: 800; margin-bottom: .75rem; }
+.index-hero p { font-size: 1.1rem; opacity: .8; max-width: 600px; margin: 0 auto 2rem; }
+.index-stats { display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; }
+.stat { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+  border-radius: 10px; padding: 1rem 2rem; text-align: center; }
+.stat-num { font-size: 2rem; font-weight: 800; }
+.stat-label { font-size: .8rem; opacity: .7; text-transform: uppercase; letter-spacing: 1px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr));
+  gap: 1.5rem; max-width: 1100px; margin: 3rem auto; padding: 0 1.5rem 4rem; }
+.card { background: white; border-radius: 14px; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08); transition: transform .2s, box-shadow .2s;
+  display: flex; flex-direction: column; }
+.card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.12); text-decoration: none; }
+.card-header { padding: 1.5rem; color: white; position: relative; overflow: hidden; }
+.card-header::after { content: attr(data-num); position: absolute; right: 1rem; top: 50%;
+  transform: translateY(-50%); font-size: 5rem; font-weight: 900;
+  opacity: .12; line-height: 1; }
+.card-num { font-size: .7rem; text-transform: uppercase; letter-spacing: 2px;
+  opacity: .8; margin-bottom: .3rem; }
+.card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: .4rem; }
+.card-sub { font-size: .85rem; opacity: .8; }
+.card-body { padding: 1.25rem 1.5rem; flex: 1; }
+.card-body p { font-size: .88rem; color: #555; margin-bottom: .75rem; }
+.card-pills { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
+.card-pill { background: #f0f0f0; color: #555; padding: .2rem .65rem;
+  border-radius: 12px; font-size: .75rem; }
+.card-footer { padding: .85rem 1.5rem; border-top: 1px solid #f0f0f0;
+  display: flex; align-items: center; justify-content: space-between; }
+.card-link { font-size: .85rem; font-weight: 600; }
+.card-arr { font-size: 1.1rem; transition: transform .2s; }
+.card:hover .card-arr { transform: translateX(4px); }
+
+.index-footer { text-align: center; padding: 3rem 1rem;
+  color: #888; font-size: .9rem; border-top: 1px solid #e8e8e8; }
+
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-logo">Claude Training</span>
+    <span class="topbar-sep">|</span>
+    <span class="topbar-title">Building a Personal Automation Stack</span>
+  </div>
+  <a href="index.html" class="topbar-home">← All Lessons</a>
+</div>
+
+<div class="hero">
+  <div class="hero-label">Training Plan</div>
+  <div class="hero-num">Practical Skills</div>
+  <div class="hero-title">Building a Personal Automation Stack</div>
+  <div class="hero-sub">Designing Workflows That Run While You Sleep</div>
+  <div class="hero-pills">
+    <span class="pill">⏱ ~2 hrs</span>
+    <span class="pill">📊 Intermediate</span>
+    <span class="pill">Self-paced</span>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidenav">
+    <div class="sidenav-title">Contents</div>
+    <ul>
+      <li><a href="#overview" class="mod-link">Overview</a></li>
+      <li><a href="#m1" class="mod-link">What Is a Personal Automation Stack?</a><ul><li><a href="#m1s1" class="sub-link">Definition</a></li><li><a href="#m1s2" class="sub-link">The Three Layers of Your Stack</a></li></ul></li><li><a href="#m2" class="mod-link">Connecting Your Tools</a><ul><li><a href="#m2s1" class="sub-link">MCP Connectors</a></li></ul></li><li><a href="#m3" class="mod-link">Designing Recurring Tasks</a><ul><li><a href="#m3s1" class="sub-link">Anatomy of a Good Automated Task</a></li><li><a href="#m3s2" class="sub-link">High-Value Automation Templates</a></li></ul></li><li><a href="#m4" class="mod-link">Chaining Workflows</a><ul><li><a href="#m4s1" class="sub-link">Sequential Chains</a></li><li><a href="#m4s2" class="sub-link">Parallel Chains</a></li></ul></li><li><a href="#m5" class="mod-link">Building Your Morning Digest</a><ul><li><a href="#m5s1" class="sub-link">Sample Digest Prompt</a></li></ul></li><li><a href="#m6" class="mod-link">Maintaining Your Stack</a><ul><li><a href="#m6s1" class="sub-link">Stack Hygiene</a></li></ul></li>
+      <li><a href="#exercises" class="mod-link">Exercises</a></li>
+      <li><a href="#summary" class="mod-link">Key Takeaways</a></li>
+    </ul>
+    <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #eee;">
+      <div style="display:flex;flex-direction:column;gap:.5rem;"><a href="documents.html">← Data, Files & Document Intelligence</a><a href="mcp-tools.html">MCP & Custom Tool Integration →</a></div>
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="module" id="overview">
+      <div class="module-label">Overview</div>
+      <h2>What You Will Learn</h2>
+      <p>This lesson teaches you how to design, connect, and maintain a personal automation stack using Claude Desktop and Dispatch. By the end, you will have a set of recurring tasks and connected services that keep you informed and productive — without daily manual effort.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem;">
+        <span class="pill">Automation stack architecture</span><span class="pill">Connecting MCP services</span><span class="pill">Designing recurring tasks</span><span class="pill">Chaining Dispatch workflows</span><span class="pill">Building a morning/weekly digest</span><span class="pill">Maintaining and improving your stack over time</span>
+      </div>
+    </div>
+
+    
+<div class="module" id="m1">
+  <div class="module-label">Module</div>
+  <h2>What Is a Personal Automation Stack?</h2>
+  <h3 id="m1s1">Definition</h3><p>A personal automation stack is a set of connected tools, recurring tasks, and agent workflows that run on your behalf — reading your data, synthesising it, and delivering actionable insights — without you having to ask each time.</p><div class='tbl-wrap'><table><thead><tr><th>Without Automation</th><th>With Automation Stack</th></tr></thead><tbody><tr><td>Check GitHub manually every morning</td><td>Claude summarises open PRs and new issues at 8am</td></tr><tr><td>Dig through Slack to catch up</td><td>Claude delivers a digest of important threads overnight</td></tr><tr><td>Manually track project tasks</td><td>Claude checks Asana and flags overdue or blocked items</td></tr><tr><td>Create status reports manually</td><td>Claude compiles reports from your tools on a schedule</td></tr></tbody></table></div><h3 id="m1s2">The Three Layers of Your Stack</h3><ol><li><strong>Data sources</strong> — where your information lives (GitHub, Slack, Asana, files, web)</li><li><strong>Agents</strong> — Claude tasks that read, process, and act on that data</li><li><strong>Outputs</strong> — summaries, documents, alerts, or actions delivered to you</li></ol><div class='callout'><div class='callout-label'>🏗️ Design Principle</div><p>Every automation should answer one question you would otherwise have to answer manually. Start with the questions you ask most often.</p></div>
+</div>
+<div class="module" id="m2">
+  <div class="module-label">Module</div>
+  <h2>Connecting Your Tools</h2>
+  <h3 id="m2s1">MCP Connectors</h3><div class='tbl-wrap'><table><thead><tr><th>Category</th><th>Common Services</th><th>What Claude Can Do</th></tr></thead><tbody><tr><td>Code &amp; Dev</td><td>GitHub, GitLab</td><td>Read issues, PRs, commits; check CI status</td></tr><tr><td>Communication</td><td>Slack, Teams</td><td>Read channels, find messages, summarise threads</td></tr><tr><td>Project Mgmt</td><td>Asana, Jira, Linear</td><td>Check tasks, update statuses, create items</td></tr><tr><td>Documents</td><td>Google Drive, Dropbox</td><td>Read, search, create, and update files</td></tr><tr><td>Calendar</td><td>Google Calendar, Outlook</td><td>Read events, find free slots, summarise the week</td></tr></tbody></table></div>
+</div>
+<div class="module" id="m3">
+  <div class="module-label">Module</div>
+  <h2>Designing Recurring Tasks</h2>
+  <h3 id="m3s1">Anatomy of a Good Automated Task</h3><p>Before scheduling anything, define these four things:</p><ol><li><strong>Trigger:</strong> when does it run? (daily 8am, every Monday, on demand)</li><li><strong>Data source:</strong> what does it read? (GitHub, Slack, files, web)</li><li><strong>Processing:</strong> what does it do with the data? (summarise, filter, analyse)</li><li><strong>Output:</strong> what does it produce? (Word doc, markdown file, notification)</li></ol><h3 id="m3s2">High-Value Automation Templates</h3><div class='tbl-wrap'><table><thead><tr><th>Automation</th><th>Trigger</th><th>What It Does</th></tr></thead><tbody><tr><td>Morning Digest</td><td>Daily 7:30am</td><td>Checks GitHub, Slack, and calendar; delivers a daily briefing</td></tr><tr><td>Weekly Dev Summary</td><td>Monday 8am</td><td>Summarises commits, open PRs, and any failing tests</td></tr><tr><td>Research Brief</td><td>Every Monday</td><td>Searches for news on a topic; saves a markdown brief to outputs folder</td></tr><tr><td>Project Status</td><td>Friday 4pm</td><td>Pulls Asana tasks, flags overdue items, creates a status report</td></tr><tr><td>Repo Health Check</td><td>Weekly</td><td>Checks for stale branches, TODO comments, and dependency updates</td></tr></tbody></table></div>
+</div>
+<div class="module" id="m4">
+  <div class="module-label">Module</div>
+  <h2>Chaining Workflows</h2>
+  <h3 id="m4s1">Sequential Chains</h3><p>The output of one task becomes the input of the next:</p><ol><li>Task 1: Fetch raw data from a source</li><li>Task 2: Analyse or filter that data</li><li>Task 3: Format and save the final output</li></ol><h3 id="m4s2">Parallel Chains</h3><p>Multiple tasks run at the same time and their outputs are merged. Use this when gathering data from multiple independent sources:</p><ul><li>Fetch GitHub issues AND Slack messages AND calendar events simultaneously</li><li>Merge all three into a single morning briefing</li></ul><div class='callout'><div class='callout-label'>⚡ Efficiency Tip</div><p>Parallel tasks complete faster than sequential ones. When your data sources are independent, always run them in parallel.</p></div>
+</div>
+<div class="module" id="m5">
+  <div class="module-label">Module</div>
+  <h2>Building Your Morning Digest</h2>
+  <h3 id="m5s1">Sample Digest Prompt</h3><div class='callout'><div class='callout-label'>📋 Template Prompt</div><p>Every day at [TIME], check: (1) GitHub — list any new issues or PRs in my repos. (2) Slack — summarise any messages mentioning my name or marked urgent. (3) My calendar — list today's events. Combine into a single morning briefing. Format: plain text, under 300 words. Flag anything that needs action today.</p></div>
+</div>
+<div class="module" id="m6">
+  <div class="module-label">Module</div>
+  <h2>Maintaining Your Stack</h2>
+  <h3 id="m6s1">Stack Hygiene</h3><p>Review your stack monthly:</p><ul><li>Which tasks are still valuable? Which are producing noise?</li><li>Are any outputs being ignored? If so, the task is probably wrong.</li><li>Have your connected services changed? (New repos, new Slack channels)</li><li>Are there new questions you ask manually that could be automated?</li></ul>
+</div>
+
+    <div id="exercises"><div class="module"><div class="module-label">Practice</div><h2>Exercises</h2><div class="exercise"><div class="exercise-num">Exercise 1</div><h4>Exercise 1 — Map Your Data Sources (10 min)</h4><p>List every tool or service you check manually on a daily or weekly basis. For each, write: what question you are answering, and how often it actually changes. These are your automation candidates.</p></div><div class="exercise"><div class="exercise-num">Exercise 2</div><h4>Exercise 2 — Connect One MCP Service (15 min)</h4><p>Pick the tool you check most often. Ask Dispatch to connect it. Walk through the connector installation. Run a test query to confirm it works.</p></div><div class="exercise"><div class="exercise-num">Exercise 3</div><h4>Exercise 3 — Build Your Morning Digest (20 min)</h4><p>Using the template from Module 5, create your morning digest task. Schedule it for tomorrow morning. After it runs, review the output and adjust the prompt if needed.</p></div><div class="exercise"><div class="exercise-num">Exercise 4</div><h4>Exercise 4 — Chain Two Tasks (20 min)</h4><p>Pick any two tasks from the template list. Design a chain: what does Task 1 produce that Task 2 needs? Create both in Dispatch and test the chain manually before scheduling.</p></div></div></div>
+
+    <div id="summary"><div class="summary-box"><h2>Key Takeaways</h2><ul><li>A personal automation stack has three layers: data sources, agents, and outputs.</li><li>MCP connectors unlock your external tools.</li><li>Every automation should answer one question you currently answer manually.</li><li>Start with the morning digest — it is the highest ROI automation.</li><li>Review and prune your stack monthly.</li></ul></div></div>
+
+    <div style="margin-top:2rem;padding:1.5rem;background:white;border-radius:12px;
+      display:flex;justify-content:space-between;align-items:center;
+      box-shadow:0 1px 4px rgba(0,0,0,.07);">
+      <a href="documents.html" style="color:var(--accent);font-weight:600;">← Data, Files & Document Intelligence</a>
+      <a href="index.html" style="color:var(--accent);font-weight:600;">↑ All Lessons</a>
+      <a href="mcp-tools.html" style="color:var(--accent);font-weight:600;">MCP & Custom Tool Integration →</a>
+    </div>
+      <a href="index.html" style="color:var(--accent);font-weight:600;">↑ Back to All Lessons</a>
+    </div>
+  </main>
+</div>
+
+<div class="page-footer">Nick Bullardbradley · Claude Training Curriculum · 2026</div>
+
+</body>
+</html>

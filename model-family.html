@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Claude Model Family — Claude Training</title>
+<style>
+:root { --accent:#512DA8; --light:#EDE7F6; --dark:#1A0050; }
+
+:root { --accent:#2E75B6; --light:#EBF3FA; --dark:#1F3864; }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #1a1a1a; background: #f8f9fa; line-height: 1.7; font-size: 16px; }
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* TOPBAR */
+.topbar { background: var(--accent); color: white; padding: 0 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 56px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+.topbar-left { display: flex; align-items: center; gap: 1rem; }
+.topbar-logo { font-weight: 700; font-size: 1.1rem; letter-spacing: .5px; }
+.topbar-sep { opacity: .4; }
+.topbar-title { font-size: .9rem; opacity: .9; }
+.topbar-home { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+  color: white; padding: .35rem .9rem; border-radius: 6px; font-size: .85rem;
+  cursor: pointer; transition: background .2s; white-space: nowrap; }
+.topbar-home:hover { background: rgba(255,255,255,.25); text-decoration: none; }
+
+/* HERO */
+.hero { background: linear-gradient(135deg, var(--dark) 0%, var(--accent) 100%);
+  color: white; padding: 3.5rem 2rem 2.5rem; text-align: center; }
+.hero-label { font-size: .8rem; text-transform: uppercase; letter-spacing: 2px;
+  opacity: .7; margin-bottom: .5rem; }
+.hero-num { font-size: 1rem; opacity: .8; margin-bottom: .25rem; }
+.hero-title { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; margin-bottom: .5rem; }
+.hero-sub { font-size: 1.05rem; opacity: .8; margin-bottom: 1.5rem; }
+.hero-pills { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+.pill { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+  padding: .3rem .85rem; border-radius: 20px; font-size: .82rem; }
+
+/* LAYOUT */
+.layout { display: grid; grid-template-columns: 260px 1fr; max-width: 1100px;
+  margin: 2rem auto; gap: 2rem; padding: 0 1.5rem 4rem; }
+@media(max-width:768px){.layout{grid-template-columns:1fr;}.sidenav{display:none;}}
+
+/* SIDENAV */
+.sidenav { position: sticky; top: 72px; align-self: start;
+  background: white; border-radius: 12px; padding: 1.25rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08); max-height: calc(100vh - 90px); overflow-y: auto; }
+.sidenav-title { font-size: .7rem; text-transform: uppercase; letter-spacing: 1.5px;
+  color: #888; margin-bottom: .75rem; font-weight: 600; }
+.sidenav ul { list-style: none; }
+.sidenav li { margin-bottom: .1rem; }
+.sidenav a { display: block; padding: .4rem .75rem; border-radius: 6px; font-size: .875rem;
+  color: #444; transition: all .15s; }
+.sidenav a:hover { background: var(--light); color: var(--accent); text-decoration: none; }
+.sidenav .mod-link { font-weight: 600; color: #222; }
+.sidenav .sub-link { padding-left: 1.25rem; font-size: .83rem; color: #666; }
+
+/* CONTENT */
+.content { min-width: 0; }
+.module { background: white; border-radius: 12px; padding: 2rem 2.25rem;
+  margin-bottom: 1.75rem; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+.module-label { font-size: .7rem; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--accent); font-weight: 700; margin-bottom: .25rem; }
+.module h2 { font-size: 1.4rem; font-weight: 700; color: var(--dark); margin-bottom: 1rem;
+  padding-bottom: .6rem; border-bottom: 2px solid var(--light); }
+.module h3 { font-size: 1.05rem; font-weight: 700; color: var(--accent);
+  margin: 1.5rem 0 .6rem; }
+.module p { margin-bottom: .85rem; color: #333; }
+.module ul, .module ol { padding-left: 1.4rem; margin-bottom: .85rem; }
+.module li { margin-bottom: .4rem; color: #333; }
+
+/* CALLOUT */
+.callout { background: var(--light); border-left: 4px solid var(--accent);
+  border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; margin: 1.25rem 0; }
+.callout-label { font-weight: 700; font-size: .9rem; color: var(--dark); margin-bottom: .4rem; }
+.callout p { margin-bottom: 0; font-size: .92rem; }
+
+/* TABLE */
+.tbl-wrap { overflow-x: auto; margin: 1.25rem 0; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+thead tr { background: var(--accent); color: white; }
+thead th { padding: .65rem 1rem; text-align: left; font-weight: 600; }
+tbody tr:nth-child(odd) { background: var(--light); }
+tbody tr:nth-child(even) { background: white; }
+tbody td { padding: .55rem 1rem; border-bottom: 1px solid #e8e8e8; vertical-align: top; }
+tbody td:first-child { font-weight: 600; }
+
+/* EXERCISE */
+.exercise { border: 2px solid var(--light); border-radius: 10px;
+  padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+.exercise-num { font-size: .75rem; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--accent); font-weight: 700; margin-bottom: .3rem; }
+.exercise h4 { font-size: 1rem; font-weight: 700; margin-bottom: .5rem; color: var(--dark); }
+.exercise p { margin: 0; font-size: .92rem; }
+
+/* SUMMARY */
+.summary-box { background: linear-gradient(135deg, var(--dark), var(--accent));
+  color: white; border-radius: 12px; padding: 2rem; margin-top: 1.5rem; }
+.summary-box h2 { color: white; border-bottom-color: rgba(255,255,255,.2); }
+.summary-box ul { color: rgba(255,255,255,.9); }
+.summary-box li { margin-bottom: .5rem; }
+
+/* FOOTER */
+.page-footer { text-align: center; padding: 2rem; color: #888; font-size: .85rem; }
+
+/* INDEX SPECIFIC */
+.index-hero { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: white; padding: 4rem 2rem 3rem; text-align: center; }
+.index-hero h1 { font-size: clamp(2rem,5vw,3.2rem); font-weight: 800; margin-bottom: .75rem; }
+.index-hero p { font-size: 1.1rem; opacity: .8; max-width: 600px; margin: 0 auto 2rem; }
+.index-stats { display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; }
+.stat { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+  border-radius: 10px; padding: 1rem 2rem; text-align: center; }
+.stat-num { font-size: 2rem; font-weight: 800; }
+.stat-label { font-size: .8rem; opacity: .7; text-transform: uppercase; letter-spacing: 1px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr));
+  gap: 1.5rem; max-width: 1100px; margin: 3rem auto; padding: 0 1.5rem 4rem; }
+.card { background: white; border-radius: 14px; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08); transition: transform .2s, box-shadow .2s;
+  display: flex; flex-direction: column; }
+.card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.12); text-decoration: none; }
+.card-header { padding: 1.5rem; color: white; position: relative; overflow: hidden; }
+.card-header::after { content: attr(data-num); position: absolute; right: 1rem; top: 50%;
+  transform: translateY(-50%); font-size: 5rem; font-weight: 900;
+  opacity: .12; line-height: 1; }
+.card-num { font-size: .7rem; text-transform: uppercase; letter-spacing: 2px;
+  opacity: .8; margin-bottom: .3rem; }
+.card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: .4rem; }
+.card-sub { font-size: .85rem; opacity: .8; }
+.card-body { padding: 1.25rem 1.5rem; flex: 1; }
+.card-body p { font-size: .88rem; color: #555; margin-bottom: .75rem; }
+.card-pills { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
+.card-pill { background: #f0f0f0; color: #555; padding: .2rem .65rem;
+  border-radius: 12px; font-size: .75rem; }
+.card-footer { padding: .85rem 1.5rem; border-top: 1px solid #f0f0f0;
+  display: flex; align-items: center; justify-content: space-between; }
+.card-link { font-size: .85rem; font-weight: 600; }
+.card-arr { font-size: 1.1rem; transition: transform .2s; }
+.card:hover .card-arr { transform: translateX(4px); }
+
+.index-footer { text-align: center; padding: 3rem 1rem;
+  color: #888; font-size: .9rem; border-top: 1px solid #e8e8e8; }
+
+
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-logo">Claude Training</span>
+    <span class="topbar-sep">|</span>
+    <span class="topbar-title">The Claude Model Family</span>
+  </div>
+  <a href="index.html" class="topbar-home">← All Lessons</a>
+</div>
+
+<div class="hero">
+  <div class="hero-label">Training Plan</div>
+  <div class="hero-num">Foundation</div>
+  <div class="hero-title">The Claude Model Family</div>
+  <div class="hero-sub">Choosing the Right Claude for Every Task</div>
+  <div class="hero-pills">
+    <span class="pill">⏱ ~60 minutes</span>
+    <span class="pill">📊 All Levels</span>
+    <span class="pill">Self-paced</span>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidenav">
+    <div class="sidenav-title">Contents</div>
+    <ul>
+      <li><a href="#overview" class="mod-link">Overview</a></li>
+      <li><a href="#m1" class="mod-link">1. The Model Tiers</a>
+        <ul>
+          <li><a href="#m1s1" class="sub-link">The Three Tiers</a></li>
+          <li><a href="#m1s2" class="sub-link">When to Use Opus</a></li>
+          <li><a href="#m1s3" class="sub-link">When to Use Sonnet</a></li>
+          <li><a href="#m1s4" class="sub-link">When to Use Haiku</a></li>
+          <li><a href="#m1s5" class="sub-link">Decision Framework</a></li>
+        </ul>
+      </li>
+      <li><a href="#m2" class="mod-link">2. Claude Products</a>
+        <ul>
+          <li><a href="#m2s1" class="sub-link">Product Overview</a></li>
+          <li><a href="#m2s2" class="sub-link">Claude Desktop / Cowork</a></li>
+          <li><a href="#m2s3" class="sub-link">Claude in Chrome</a></li>
+          <li><a href="#m2s4" class="sub-link">Claude Code vs. Desktop</a></li>
+        </ul>
+      </li>
+      <li><a href="#m3" class="mod-link">3. Models Working Together</a>
+        <ul>
+          <li><a href="#m3s1" class="sub-link">Multi-Model Workflows</a></li>
+          <li><a href="#m3s2" class="sub-link">Orchestrator-Worker Pattern</a></li>
+          <li><a href="#m3s3" class="sub-link">How Dispatch Selects Models</a></li>
+        </ul>
+      </li>
+      <li><a href="#m4" class="mod-link">4. Practical Scenarios</a></li>
+      <li><a href="#m5" class="mod-link">5. API & Developer View</a></li>
+      <li><a href="#exercises" class="mod-link">Exercises</a></li>
+      <li><a href="#summary" class="mod-link">Key Takeaways</a></li>
+    </ul>
+    <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #eee;">
+      <div style="display:flex;flex-direction:column;gap:.5rem;"><a href="dispatch.html">Claude Desktop & Dispatch →</a></div>
+    </div>
+  </aside>
+
+  <main class="content">
+
+    <div class="module" id="overview">
+      <div class="module-label">Overview</div>
+      <h2>What You Will Learn</h2>
+      <p>Not all Claude models are the same. Anthropic offers a family of models — Opus, Sonnet, and Haiku — each optimised for a different balance of capability, speed, and cost. There are also multiple ways to access Claude: via chat, API, Claude Code, Claude Desktop (Cowork), and Claude in Chrome. This lesson teaches you how to think about the right model for the right task, and how the different Claudes work together in multi-model systems.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem;">
+        <span class="pill" style="background:var(--light);color:var(--accent);">The three model tiers</span>
+        <span class="pill" style="background:var(--light);color:var(--accent);">Claude products compared</span>
+        <span class="pill" style="background:var(--light);color:var(--accent);">Multi-model workflows</span>
+        <span class="pill" style="background:var(--light);color:var(--accent);">When to override the default</span>
+        <span class="pill" style="background:var(--light);color:var(--accent);">Cost &amp; speed trade-offs</span>
+      </div>
+    </div>
+
+    <!-- MODULE 1 -->
+    <div class="module" id="m1">
+      <div class="module-label">Module 1</div>
+      <h2>The Claude Model Tiers</h2>
+
+      <h3 id="m1s1">The Three Tiers at a Glance</h3>
+      <p>Anthropic's current model family has three tiers. Each tier is a deliberate trade-off between intelligence, speed, and cost:</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Model</th><th>Tier</th><th>Best Described As</th><th>Speed</th><th>Cost</th></tr></thead>
+        <tbody>
+          <tr><td>Claude Opus 4.6</td><td>Flagship</td><td>The most capable — deep reasoning, nuanced judgment, complex tasks</td><td>Slowest</td><td>Highest</td></tr>
+          <tr><td>Claude Sonnet 4.6</td><td>Balanced</td><td>The sweet spot — strong capability with much faster responses</td><td>Fast</td><td>Medium</td></tr>
+          <tr><td>Claude Haiku 4.5</td><td>Lightweight</td><td>The quickest and cheapest — great for simple, high-volume, or latency-sensitive tasks</td><td>Fastest</td><td>Lowest</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout"><div class="callout-label">🎯 The Default in Dispatch</div><p>Claude Desktop and Dispatch use <strong>Sonnet</strong> by default — it hits the right balance for most task delegation work. You can override this when you need Opus for harder problems or Haiku for simple high-speed tasks.</p></div>
+
+      <h3 id="m1s2">Claude Opus — When to Use It</h3>
+      <p>Opus is the flagship model. Use it when the task requires the deepest reasoning, the most nuanced judgment, or the highest accuracy — and you are willing to wait a little longer.</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Use Opus When...</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>The task requires sustained multi-step reasoning</td><td>Complex architecture planning, strategic analysis</td></tr>
+          <tr><td>Accuracy matters more than speed</td><td>Security audits, legal document review, financial modelling</td></tr>
+          <tr><td>The problem is ambiguous or requires creativity</td><td>Writing long-form content, designing novel solutions</td></tr>
+          <tr><td>You are building a skill that will run many times</td><td>Get it right once with Opus, then run it with Sonnet</td></tr>
+          <tr><td>You are debugging a failing agent</td><td>Opus is better at diagnosing subtle failure modes</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3 id="m1s3">Claude Sonnet — When to Use It</h3>
+      <p>Sonnet is the workhorse. It handles the vast majority of real-world tasks with strong performance and responses that arrive much faster than Opus.</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Use Sonnet When...</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>Day-to-day task delegation</td><td>Research, file work, document creation, code tasks</td></tr>
+          <tr><td>Interactive back-and-forth</td><td>Conversations where you want quick responses</td></tr>
+          <tr><td>Scheduled automations</td><td>Morning digests, weekly reports, recurring research</td></tr>
+          <tr><td>Code generation and review</td><td>Bug fixes, feature additions, test writing</td></tr>
+          <tr><td>Most multi-agent workflows</td><td>Subagents doing specific well-defined subtasks</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3 id="m1s4">Claude Haiku — When to Use It</h3>
+      <p>Haiku is the fastest and most cost-efficient model. Use it for tasks that are simple, repetitive, or where latency is the primary concern.</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Use Haiku When...</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>Simple classification or extraction</td><td>Categorising a list, extracting a single field from text</td></tr>
+          <tr><td>High-volume processing</td><td>Processing thousands of records, batch file renaming</td></tr>
+          <tr><td>Real-time or low-latency responses</td><td>Live chat, quick lookups, streaming summaries</td></tr>
+          <tr><td>Routing or triage steps in a pipeline</td><td>Deciding which agent to hand a task to next</td></tr>
+          <tr><td>Cost is a primary concern</td><td>Large-scale automations where Sonnet would be expensive at scale</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3 id="m1s5">Decision Framework</h3>
+      <p>When you are unsure which model to use, work through these questions:</p>
+      <ol>
+        <li>Is the task simple and well-defined? → <strong>Haiku</strong></li>
+        <li>Is the task typical day-to-day work? → <strong>Sonnet</strong> (default)</li>
+        <li>Does it require deep reasoning, high accuracy, or complex judgment? → <strong>Opus</strong></li>
+        <li>Will this run thousands of times? → Start with Sonnet, profile cost, drop to Haiku if quality holds</li>
+        <li>Are you building something mission-critical? → Design with Opus, test whether Sonnet matches quality</li>
+      </ol>
+    </div>
+
+    <!-- MODULE 2 -->
+    <div class="module" id="m2">
+      <div class="module-label">Module 2</div>
+      <h2>The Claude Products &amp; Interfaces</h2>
+
+      <h3 id="m2s1">Overview of Claude Products</h3>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Product</th><th>What It Is</th><th>Best For</th></tr></thead>
+        <tbody>
+          <tr><td>Claude.ai (web/mobile/desktop chat)</td><td>Conversational interface — the standard Claude experience</td><td>Everyday questions, writing, analysis, brainstorming</td></tr>
+          <tr><td>Claude API (Anthropic API)</td><td>Programmatic access for developers — build Claude into your own apps</td><td>Building products, custom integrations, automated pipelines</td></tr>
+          <tr><td>Claude Code (CLI)</td><td>Command-line agentic coding tool — delegates coding tasks from your terminal</td><td>Software engineers automating development tasks</td></tr>
+          <tr><td>Claude Desktop / Cowork</td><td>Desktop app with Dispatch, file access, MCP connectors, and scheduled tasks</td><td>Power users automating file, research, and tool workflows</td></tr>
+          <tr><td>Claude in Chrome</td><td>Browser extension for web automation — screenshots, clicks, form filling</td><td>Browser-based tasks, web scraping, form automation</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3 id="m2s2">Claude Desktop / Cowork — Your Primary Tool</h3>
+      <p>Claude Desktop is the product you are using right now. It layers several capabilities on top of the base Claude model:</p>
+      <ul>
+        <li><strong>Dispatch</strong> — the orchestrator that coordinates task sessions on your behalf</li>
+        <li><strong>File system access</strong> — read and write files on your computer with your permission</li>
+        <li><strong>MCP connectors</strong> — integrate with GitHub, Slack, Asana, Google Drive, and more</li>
+        <li><strong>Skills</strong> — reusable agent definitions for domain-specific work</li>
+        <li><strong>Scheduled tasks</strong> — recurring automations that run without you</li>
+        <li><strong>Code sessions</strong> — full Claude Code sessions with git worktree isolation</li>
+      </ul>
+      <div class="callout"><div class="callout-label">💡 Key Insight</div><p>Claude Desktop is not just a chat interface — it is an orchestration platform. The model (Sonnet by default) is the reasoning engine, but Dispatch, MCP, and skills are what make it a genuine productivity system.</p></div>
+
+      <h3 id="m2s3">Claude in Chrome</h3>
+      <p>Claude in Chrome is a browser automation layer. When connected, it gives Dispatch the ability to take screenshots, click and fill forms on any website, extract structured data from web pages, and automate multi-step browser workflows.</p>
+      <div class="callout"><div class="callout-label">🔌 Setup Reminder</div><p>Claude in Chrome requires the Chrome extension to be installed and signed in. Once connected, Dispatch detects it automatically and can use browser tools as part of any task.</p></div>
+
+      <h3 id="m2s4">Claude Code vs. Claude Desktop Code Sessions</h3>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Dimension</th><th>Claude Code (CLI)</th><th>Claude Desktop Code Sessions</th></tr></thead>
+        <tbody>
+          <tr><td>How you access it</td><td>Terminal / command line</td><td>Via Dispatch in the desktop app</td></tr>
+          <tr><td>Who uses it</td><td>Engineers comfortable in the terminal</td><td>Anyone using Claude Desktop</td></tr>
+          <tr><td>How you interact</td><td>Direct CLI commands, slash commands</td><td>Natural language via Dispatch</td></tr>
+          <tr><td>Git integration</td><td>Full git worktree isolation</td><td>Full git worktree isolation (same engine)</td></tr>
+          <tr><td>Best for</td><td>Engineers who want direct control</td><td>Power users who want to delegate without opening a terminal</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout"><div class="callout-label">🔧 Under the Hood</div><p>Claude Desktop code sessions use Claude Code as their engine. When Dispatch starts a 'code task', it is spinning up a Claude Code session with a git worktree, just surfaced through the Dispatch interface rather than the terminal.</p></div>
+    </div>
+
+    <!-- MODULE 3 -->
+    <div class="module" id="m3">
+      <div class="module-label">Module 3</div>
+      <h2>How Models Work Together</h2>
+
+      <h3 id="m3s1">Multi-Model Workflows</h3>
+      <p>Sophisticated agent systems often use different models at different stages — a technique called <em>model routing</em>. The idea is to match the intelligence level of the model to the complexity of the subtask.</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Stage</th><th>Recommended Model</th><th>Reason</th></tr></thead>
+        <tbody>
+          <tr><td>Triage / routing</td><td>Haiku</td><td>Simple decision: which agent should handle this?</td></tr>
+          <tr><td>Data extraction / parsing</td><td>Haiku</td><td>Well-defined task, high volume, low complexity</td></tr>
+          <tr><td>Research and synthesis</td><td>Sonnet</td><td>Moderate complexity, needs real reasoning</td></tr>
+          <tr><td>Code generation and review</td><td>Sonnet</td><td>Strong but does not need Opus for typical tasks</td></tr>
+          <tr><td>Architecture / planning</td><td>Opus</td><td>High complexity, nuanced judgment required</td></tr>
+          <tr><td>Final verification / QA</td><td>Opus</td><td>Catch what Sonnet might have missed</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3 id="m3s2">The Orchestrator-Worker Pattern</h3>
+      <p>The most common multi-model pattern uses a capable model to orchestrate and a lighter model for routine work:</p>
+      <ol>
+        <li><strong>Sonnet (orchestrator)</strong> receives the high-level goal and breaks it into subtasks</li>
+        <li><strong>Haiku (workers)</strong> handle simple, well-defined subtasks in parallel</li>
+        <li><strong>Sonnet</strong> collects and synthesises the results</li>
+        <li><strong>Opus (reviewer)</strong> does a final quality check on high-stakes outputs</li>
+      </ol>
+      <div class="callout"><div class="callout-label">💰 Cost Efficiency</div><p>This pattern can cut costs by 60–80% on high-volume workflows compared to running everything through Sonnet or Opus, while maintaining near-identical output quality for most tasks.</p></div>
+
+      <h3 id="m3s3">How Dispatch Handles Model Selection</h3>
+      <ul>
+        <li>Default sessions use <strong>Sonnet</strong> unless you specify otherwise</li>
+        <li>Request Opus explicitly: 'Use Opus for this — it needs deep reasoning'</li>
+        <li>Request Haiku explicitly: 'Use the fastest model — this is a simple extraction'</li>
+        <li>Code sessions started via Dispatch inherit the model you specify, defaulting to Sonnet</li>
+      </ul>
+      <div class="callout"><div class="callout-label">🔄 How to Override the Model</div><p>In Dispatch, just say which model you want. The model strings are:<br><code>claude-opus-4-6</code> &nbsp;|&nbsp; <code>claude-sonnet-4-6</code> &nbsp;|&nbsp; <code>claude-haiku-4-5-20251001</code></p></div>
+    </div>
+
+    <!-- MODULE 4 -->
+    <div class="module" id="m4">
+      <div class="module-label">Module 4</div>
+      <h2>Practical Scenarios</h2>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Scenario</th><th>Model</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>Summarising 100 short customer emails</td><td>Haiku</td><td>Simple extraction, high volume</td></tr>
+          <tr><td>Writing a technical architecture document</td><td>Opus</td><td>Complex reasoning, weighs trade-offs carefully</td></tr>
+          <tr><td>Daily morning digest automation</td><td>Sonnet</td><td>Moderate complexity, runs every day — right balance</td></tr>
+          <tr><td>Bug fix in a well-understood codebase</td><td>Sonnet</td><td>Standard code task, no need for Opus</td></tr>
+          <tr><td>Diagnosing a subtle production bug</td><td>Opus</td><td>Needs deep diagnostic reasoning across many possibilities</td></tr>
+          <tr><td>Classifying support tickets by category</td><td>Haiku</td><td>Simple classification, likely high volume</td></tr>
+          <tr><td>Research synthesis across 10 papers</td><td>Sonnet</td><td>Moderate complexity, Sonnet handles this well</td></tr>
+          <tr><td>Designing a multi-agent system architecture</td><td>Opus</td><td>Highly complex, creative, high-stakes planning task</td></tr>
+          <tr><td>Scheduled weekly repo health check</td><td>Sonnet</td><td>Recurring, moderate complexity, Sonnet is appropriate</td></tr>
+          <tr><td>Real-time keyword extraction from a stream</td><td>Haiku</td><td>Latency-critical, simple extraction</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="callout" style="margin-top:1.5rem"><div class="callout-label">⚡ Default Rule</div><p>When in doubt, use Sonnet. It is fast, capable, and handles the vast majority of tasks excellently. Only reach for Opus when you genuinely need it, and Haiku when speed or cost is the primary driver.</p></div>
+    </div>
+
+    <!-- MODULE 5 -->
+    <div class="module" id="m5">
+      <div class="module-label">Module 5</div>
+      <h2>API Access &amp; the Developer Perspective</h2>
+
+      <h3>API Capabilities</h3>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Capability</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Model selection</td><td>Choose any model per request</td></tr>
+          <tr><td>Tool use</td><td>Define custom tools (functions) that Claude can call during a conversation</td></tr>
+          <tr><td>Streaming</td><td>Receive responses token-by-token for lower perceived latency</td></tr>
+          <tr><td>Vision</td><td>Send images alongside text for multi-modal tasks</td></tr>
+          <tr><td>Long context</td><td>All current models support very long context windows</td></tr>
+          <tr><td>System prompts</td><td>Set persistent instructions that apply to the entire conversation</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Model Strings</h3>
+      <p>When specifying a model explicitly — in the API, in a custom skill, or when overriding Dispatch — use these exact strings:</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Model</th><th>String to Use</th></tr></thead>
+        <tbody>
+          <tr><td>Claude Opus 4.6</td><td><code>claude-opus-4-6</code></td></tr>
+          <tr><td>Claude Sonnet 4.6</td><td><code>claude-sonnet-4-6</code></td></tr>
+          <tr><td>Claude Haiku 4.5</td><td><code>claude-haiku-4-5-20251001</code></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <!-- EXERCISES -->
+    <div class="module" id="exercises">
+      <div class="module-label">Practice</div>
+      <h2>Exercises</h2>
+      <div class="exercise"><div class="exercise-num">Exercise 1</div><h4>Model Audit (10 min)</h4><p>Review the automations and scheduled tasks you have set up. For each one, ask: is Sonnet the right model, or should this use Haiku (simpler task) or Opus (higher stakes)? Note any you would change.</p></div>
+      <div class="exercise"><div class="exercise-num">Exercise 2</div><h4>Opus vs. Sonnet Comparison (15 min)</h4><p>Take a complex research or analysis task. Run it once with Sonnet and once with Opus ('use Claude Opus for this'). Compare the outputs: depth, accuracy, nuance. Is Opus meaningfully better for this type of task?</p></div>
+      <div class="exercise"><div class="exercise-num">Exercise 3</div><h4>Haiku for Batch Work (10 min)</h4><p>Find a simple, repetitive task you do often. Run it with Haiku ('use the fastest model'). Verify the quality is acceptable for your use case.</p></div>
+      <div class="exercise"><div class="exercise-num">Exercise 4</div><h4>Design a Multi-Model Workflow (20 min)</h4><p>Take any complex automation you have built or want to build. Redesign it as a multi-model pipeline: which steps use Haiku, which use Sonnet, which (if any) use Opus? Write out the pipeline as a Dispatch prompt.</p></div>
+    </div>
+
+    <!-- SUMMARY -->
+    <div id="summary">
+      <div class="summary-box">
+        <h2>Key Takeaways</h2>
+        <ul>
+          <li><strong>Opus:</strong> the most capable, slowest, and most expensive — for genuinely hard problems.</li>
+          <li><strong>Sonnet:</strong> the default and the right choice for most tasks — fast, capable, balanced.</li>
+          <li><strong>Haiku:</strong> fastest and cheapest — for simple, high-volume, or latency-critical tasks.</li>
+          <li>Claude Desktop is an orchestration platform, not just a chat interface.</li>
+          <li>Multi-model workflows route tasks to the right model at each stage — maximising quality and minimising cost.</li>
+          <li>When in doubt: start with Sonnet, add Opus where accuracy demands it, and Haiku where speed or volume demands it.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="margin-top:2rem;padding:1.5rem;background:white;border-radius:12px;
+      display:flex;justify-content:space-between;align-items:center;
+      box-shadow:0 1px 4px rgba(0,0,0,.07);">
+      <span></span>
+      <a href="index.html" style="color:var(--accent);font-weight:600;">↑ All Lessons</a>
+      <a href="dispatch.html" style="color:var(--accent);font-weight:600;">Claude Desktop & Dispatch →</a>
+    </div>
+
+  </main>
+</div>
+
+<div class="page-footer">Nick Bullardbradley · Claude Training Curriculum · 2026</div>
+
+</body>
+</html>

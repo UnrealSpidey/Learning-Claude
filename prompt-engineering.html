@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prompt Engineering for Power Users — Claude Training</title>
+<style>
+:root { --accent:#6B2D8B; --light:#F0E6F8; --dark:#3A0F4E; }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #1a1a1a; background: #f8f9fa; line-height: 1.7; font-size: 16px; }
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* TOPBAR */
+.topbar { background: var(--accent); color: white; padding: 0 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 56px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+.topbar-left { display: flex; align-items: center; gap: 1rem; }
+.topbar-logo { font-weight: 700; font-size: 1.1rem; letter-spacing: .5px; }
+.topbar-sep { opacity: .4; }
+.topbar-title { font-size: .9rem; opacity: .9; }
+.topbar-home { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+  color: white; padding: .35rem .9rem; border-radius: 6px; font-size: .85rem;
+  cursor: pointer; transition: background .2s; white-space: nowrap; }
+.topbar-home:hover { background: rgba(255,255,255,.25); text-decoration: none; }
+
+/* HERO */
+.hero { background: linear-gradient(135deg, var(--dark) 0%, var(--accent) 100%);
+  color: white; padding: 3.5rem 2rem 2.5rem; text-align: center; }
+.hero-label { font-size: .8rem; text-transform: uppercase; letter-spacing: 2px;
+  opacity: .7; margin-bottom: .5rem; }
+.hero-num { font-size: 1rem; opacity: .8; margin-bottom: .25rem; }
+.hero-title { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; margin-bottom: .5rem; }
+.hero-sub { font-size: 1.05rem; opacity: .8; margin-bottom: 1.5rem; }
+.hero-pills { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+.pill { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+  padding: .3rem .85rem; border-radius: 20px; font-size: .82rem; }
+
+/* LAYOUT */
+.layout { display: grid; grid-template-columns: 260px 1fr; max-width: 1100px;
+  margin: 2rem auto; gap: 2rem; padding: 0 1.5rem 4rem; }
+@media(max-width:768px){.layout{grid-template-columns:1fr;}.sidenav{display:none;}}
+
+/* SIDENAV */
+.sidenav { position: sticky; top: 72px; align-self: start;
+  background: white; border-radius: 12px; padding: 1.25rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08); max-height: calc(100vh - 90px); overflow-y: auto; }
+.sidenav-title { font-size: .7rem; text-transform: uppercase; letter-spacing: 1.5px;
+  color: #888; margin-bottom: .75rem; font-weight: 600; }
+.sidenav ul { list-style: none; }
+.sidenav li { margin-bottom: .1rem; }
+.sidenav a { display: block; padding: .4rem .75rem; border-radius: 6px; font-size: .875rem;
+  color: #444; transition: all .15s; }
+.sidenav a:hover { background: var(--light); color: var(--accent); text-decoration: none; }
+.sidenav .mod-link { font-weight: 600; color: #222; }
+.sidenav .sub-link { padding-left: 1.25rem; font-size: .83rem; color: #666; }
+
+/* CONTENT */
+.content { min-width: 0; }
+.module { background: white; border-radius: 12px; padding: 2rem 2.25rem;
+  margin-bottom: 1.75rem; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+.module-label { font-size: .7rem; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--accent); font-weight: 700; margin-bottom: .25rem; }
+.module h2 { font-size: 1.4rem; font-weight: 700; color: var(--dark); margin-bottom: 1rem;
+  padding-bottom: .6rem; border-bottom: 2px solid var(--light); }
+.module h3 { font-size: 1.05rem; font-weight: 700; color: var(--accent);
+  margin: 1.5rem 0 .6rem; }
+.module p { margin-bottom: .85rem; color: #333; }
+.module ul, .module ol { padding-left: 1.4rem; margin-bottom: .85rem; }
+.module li { margin-bottom: .4rem; color: #333; }
+
+/* CALLOUT */
+.callout { background: var(--light); border-left: 4px solid var(--accent);
+  border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; margin: 1.25rem 0; }
+.callout-label { font-weight: 700; font-size: .9rem; color: var(--dark); margin-bottom: .4rem; }
+.callout p { margin-bottom: 0; font-size: .92rem; }
+
+/* TABLE */
+.tbl-wrap { overflow-x: auto; margin: 1.25rem 0; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+thead tr { background: var(--accent); color: white; }
+thead th { padding: .65rem 1rem; text-align: left; font-weight: 600; }
+tbody tr:nth-child(odd) { background: var(--light); }
+tbody tr:nth-child(even) { background: white; }
+tbody td { padding: .55rem 1rem; border-bottom: 1px solid #e8e8e8; vertical-align: top; }
+tbody td:first-child { font-weight: 600; }
+
+/* EXERCISE */
+.exercise { border: 2px solid var(--light); border-radius: 10px;
+  padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+.exercise-num { font-size: .75rem; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--accent); font-weight: 700; margin-bottom: .3rem; }
+.exercise h4 { font-size: 1rem; font-weight: 700; margin-bottom: .5rem; color: var(--dark); }
+.exercise p { margin: 0; font-size: .92rem; }
+
+/* SUMMARY */
+.summary-box { background: linear-gradient(135deg, var(--dark), var(--accent));
+  color: white; border-radius: 12px; padding: 2rem; margin-top: 1.5rem; }
+.summary-box h2 { color: white; border-bottom-color: rgba(255,255,255,.2); }
+.summary-box ul { color: rgba(255,255,255,.9); }
+.summary-box li { margin-bottom: .5rem; }
+
+/* FOOTER */
+.page-footer { text-align: center; padding: 2rem; color: #888; font-size: .85rem; }
+
+/* INDEX SPECIFIC */
+.index-hero { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: white; padding: 4rem 2rem 3rem; text-align: center; }
+.index-hero h1 { font-size: clamp(2rem,5vw,3.2rem); font-weight: 800; margin-bottom: .75rem; }
+.index-hero p { font-size: 1.1rem; opacity: .8; max-width: 600px; margin: 0 auto 2rem; }
+.index-stats { display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; }
+.stat { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+  border-radius: 10px; padding: 1rem 2rem; text-align: center; }
+.stat-num { font-size: 2rem; font-weight: 800; }
+.stat-label { font-size: .8rem; opacity: .7; text-transform: uppercase; letter-spacing: 1px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr));
+  gap: 1.5rem; max-width: 1100px; margin: 3rem auto; padding: 0 1.5rem 4rem; }
+.card { background: white; border-radius: 14px; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08); transition: transform .2s, box-shadow .2s;
+  display: flex; flex-direction: column; }
+.card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.12); text-decoration: none; }
+.card-header { padding: 1.5rem; color: white; position: relative; overflow: hidden; }
+.card-header::after { content: attr(data-num); position: absolute; right: 1rem; top: 50%;
+  transform: translateY(-50%); font-size: 5rem; font-weight: 900;
+  opacity: .12; line-height: 1; }
+.card-num { font-size: .7rem; text-transform: uppercase; letter-spacing: 2px;
+  opacity: .8; margin-bottom: .3rem; }
+.card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: .4rem; }
+.card-sub { font-size: .85rem; opacity: .8; }
+.card-body { padding: 1.25rem 1.5rem; flex: 1; }
+.card-body p { font-size: .88rem; color: #555; margin-bottom: .75rem; }
+.card-pills { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
+.card-pill { background: #f0f0f0; color: #555; padding: .2rem .65rem;
+  border-radius: 12px; font-size: .75rem; }
+.card-footer { padding: .85rem 1.5rem; border-top: 1px solid #f0f0f0;
+  display: flex; align-items: center; justify-content: space-between; }
+.card-link { font-size: .85rem; font-weight: 600; }
+.card-arr { font-size: 1.1rem; transition: transform .2s; }
+.card:hover .card-arr { transform: translateX(4px); }
+
+.index-footer { text-align: center; padding: 3rem 1rem;
+  color: #888; font-size: .9rem; border-top: 1px solid #e8e8e8; }
+
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-logo">Claude Training</span>
+    <span class="topbar-sep">|</span>
+    <span class="topbar-title">Prompt Engineering for Power Users</span>
+  </div>
+  <a href="index.html" class="topbar-home">← All Lessons</a>
+</div>
+
+<div class="hero">
+  <div class="hero-label">Training Plan</div>
+  <div class="hero-num">Foundation</div>
+  <div class="hero-title">Prompt Engineering for Power Users</div>
+  <div class="hero-sub">Getting Consistent, High-Quality Results from Claude</div>
+  <div class="hero-pills">
+    <span class="pill">⏱ ~90 min</span>
+    <span class="pill">📊 All Levels</span>
+    <span class="pill">Self-paced</span>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidenav">
+    <div class="sidenav-title">Contents</div>
+    <ul>
+      <li><a href="#overview" class="mod-link">Overview</a></li>
+      <li><a href="#m1" class="mod-link">Why Prompt Engineering Matters</a><ul><li><a href="#m1s1" class="sub-link">How Claude Processes Your Input</a></li><li><a href="#m1s2" class="sub-link">The Five Elements of a Strong Prompt</a></li></ul></li><li><a href="#m2" class="mod-link">Core Techniques</a><ul><li><a href="#m2s1" class="sub-link">Chain-of-Thought Prompting</a></li><li><a href="#m2s2" class="sub-link">Few-Shot Examples</a></li><li><a href="#m2s3" class="sub-link">Negative Examples & Constraints</a></li><li><a href="#m2s4" class="sub-link">XML Tags for Structured Output</a></li><li><a href="#m2s5" class="sub-link">Role Framing</a></li></ul></li><li><a href="#m3" class="mod-link">Advanced Techniques</a><ul><li><a href="#m3s1" class="sub-link">Prompt Chaining</a></li><li><a href="#m3s2" class="sub-link">Self-Consistency</a></li><li><a href="#m3s3" class="sub-link">Asking Claude to Critique Its Own Output</a></li></ul></li><li><a href="#m4" class="mod-link">Common Mistakes & Fixes</a><ul><li><a href="#m4s1" class="sub-link">Prompt Anti-Patterns</a></li></ul></li><li><a href="#m5" class="mod-link">Iterating on Prompts</a><ul><li><a href="#m5s1" class="sub-link">The Prompt Iteration Cycle</a></li></ul></li>
+      <li><a href="#exercises" class="mod-link">Exercises</a></li>
+      <li><a href="#summary" class="mod-link">Key Takeaways</a></li>
+    </ul>
+    <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #eee;">
+      <div style="display:flex;flex-direction:column;gap:.5rem;"><a href="dispatch.html">← Claude Desktop & Dispatch</a><a href="code-and-repos.html">Working With Code and Repos →</a></div>
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="module" id="overview">
+      <div class="module-label">Overview</div>
+      <h2>What You Will Learn</h2>
+      <p>Prompt engineering is the art of communicating with Claude in ways that produce reliable, accurate, and useful results. This lesson covers the most effective techniques — from basic structuring to advanced chain-of-thought methods — so you can get the output you actually want, every time.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem;">
+        <span class="pill">Structuring prompts for clarity</span><span class="pill">Chain-of-thought reasoning</span><span class="pill">Few-shot and negative examples</span><span class="pill">Role and context framing</span><span class="pill">XML output structuring</span><span class="pill">Iterating on prompts systematically</span>
+      </div>
+    </div>
+
+    
+<div class="module" id="m1">
+  <div class="module-label">Module</div>
+  <h2>Why Prompt Engineering Matters</h2>
+  <h3 id="m1s1">How Claude Processes Your Input</h3><p>Claude reads your entire message and generates a response that is the most likely continuation given everything it has seen. Every word you include — and every word you omit — shapes the output.</p><div class='tbl-wrap'><table><thead><tr><th>Input Quality</th><th>Typical Output</th></tr></thead><tbody><tr><td>Vague goal, no context</td><td>Generic, shallow, often off-target</td></tr><tr><td>Clear goal, some context</td><td>Relevant but may miss nuance</td></tr><tr><td>Clear goal + context + examples</td><td>Specific, accurate, formatted correctly</td></tr><tr><td>Clear goal + context + examples + constraints</td><td>Consistent, reliable, production-ready</td></tr></tbody></table></div><h3 id="m1s2">The Five Elements of a Strong Prompt</h3><ol><li><strong>Role</strong> — who Claude should act as (e.g. senior Python developer, technical writer)</li><li><strong>Goal</strong> — the specific outcome you want</li><li><strong>Context</strong> — background information Claude needs to make good decisions</li><li><strong>Format</strong> — how the output should be structured</li><li><strong>Constraints</strong> — what Claude should NOT do</li></ol><div class='callout'><div class='callout-label'>⚖️ Weak vs. Strong Example</div><p><strong>WEAK:</strong> 'Summarize this code.'<br><br><strong>STRONG:</strong> 'You are a senior software engineer reviewing a Python codebase for a new team member. Summarize the attached file in plain English, covering: (1) what it does, (2) key functions and their purpose, (3) any risks or code smells. Use bullet points. Do not reproduce the code.'</p></div>
+</div>
+<div class="module" id="m2">
+  <div class="module-label">Module</div>
+  <h2>Core Techniques</h2>
+  <h3 id="m2s1">Chain-of-Thought Prompting</h3><p>Asking Claude to reason step-by-step before giving a final answer dramatically improves accuracy on complex tasks.</p><ul><li>Add: 'Think through this step by step before answering'</li><li>Add: 'Show your reasoning, then give your final answer'</li><li>Add: 'List any assumptions you are making'</li></ul><div class='callout'><div class='callout-label'>🔗 When to Use It</div><p>Most valuable for: multi-step problems, tasks with ambiguous inputs, calculations, debugging, and any time accuracy matters more than speed.</p></div><h3 id="m2s2">Few-Shot Examples</h3><p>Providing 2–3 examples of input/output pairs is often more effective than any amount of description.</p><div class='tbl-wrap'><table><thead><tr><th>Approach</th><th>Effectiveness</th></tr></thead><tbody><tr><td>Description only ('be concise')</td><td>Moderate — Claude interprets 'concise' differently each time</td></tr><tr><td>One example</td><td>Good — Claude infers the pattern</td></tr><tr><td>2–3 varied examples</td><td>Excellent — Claude generalises reliably</td></tr><tr><td>Examples + negative example</td><td>Best — Claude knows what to avoid too</td></tr></tbody></table></div><h3 id="m2s3">Negative Examples & Constraints</h3><p>Telling Claude what NOT to do is as powerful as telling it what to do:</p><ul><li>'Do not use bullet points' — forces prose</li><li>'Do not invent details that are not in the source' — prevents hallucination</li><li>'Do not explain what you are doing, just do it' — removes unnecessary preamble</li><li>'Do not summarise the problem back to me before answering' — saves time</li></ul><h3 id="m2s4">XML Tags for Structured Output</h3><p>Asking Claude to wrap its response in XML tags makes outputs easy to parse, especially when building automated workflows.</p><div class='callout'><div class='callout-label'>📄 Example</div><p>Prompt: 'Analyse this code and respond in this format:<br>&lt;summary&gt;One sentence summary&lt;/summary&gt;<br>&lt;risks&gt;List of risks&lt;/risks&gt;<br>&lt;recommendations&gt;List of recommendations&lt;/recommendations&gt;'</p></div><h3 id="m2s5">Role Framing</h3><div class='tbl-wrap'><table><thead><tr><th>Role</th><th>Effect</th></tr></thead><tbody><tr><td>Senior software engineer</td><td>Precise technical language, flags edge cases, prefers clean solutions</td></tr><tr><td>Technical writer</td><td>Clear prose, structured headings, audience-appropriate explanations</td></tr><tr><td>Devil's advocate</td><td>Challenges assumptions, surfaces weaknesses in plans</td></tr><tr><td>Socratic tutor</td><td>Asks guiding questions rather than giving direct answers</td></tr></tbody></table></div>
+</div>
+<div class="module" id="m3">
+  <div class="module-label">Module</div>
+  <h2>Advanced Techniques</h2>
+  <h3 id="m3s1">Prompt Chaining</h3><p>Break complex tasks into a chain of simpler prompts, where each prompt builds on the previous output:</p><ol><li>Prompt 1: Extract the raw data or information</li><li>Prompt 2: Analyse or transform it</li><li>Prompt 3: Format the final output</li></ol><h3 id="m3s2">Self-Consistency</h3><p>For high-stakes outputs, ask Claude to generate multiple independent responses and then synthesise the best answer.</p><ul><li>'Generate three different approaches to this problem, then recommend the best one with justification'</li><li>'Answer this question twice independently, then compare your two answers and resolve any discrepancies'</li></ul><h3 id="m3s3">Asking Claude to Critique Its Own Output</h3><ul><li>'Now review your answer for accuracy and completeness. What is missing or wrong?'</li><li>'Rate your response 1–10 for accuracy. What would make it a 10?'</li><li>'What assumptions did you make? Are any of them wrong?'</li></ul>
+</div>
+<div class="module" id="m4">
+  <div class="module-label">Module</div>
+  <h2>Common Mistakes & Fixes</h2>
+  <h3 id="m4s1">Prompt Anti-Patterns</h3><div class='tbl-wrap'><table><thead><tr><th>Anti-Pattern</th><th>What Goes Wrong</th><th>Fix</th></tr></thead><tbody><tr><td>Asking multiple questions at once</td><td>Claude prioritises some, skips others</td><td>One question per prompt; chain if needed</td></tr><tr><td>Vague quality bar ('be good')</td><td>Claude has no measurable target</td><td>Give a concrete example of good output</td></tr><tr><td>No output format specified</td><td>Output format varies every time</td><td>Always specify format explicitly</td></tr><tr><td>Too much irrelevant context</td><td>Claude focuses on the wrong information</td><td>Trim to only what is necessary</td></tr></tbody></table></div>
+</div>
+<div class="module" id="m5">
+  <div class="module-label">Module</div>
+  <h2>Iterating on Prompts</h2>
+  <h3 id="m5s1">The Prompt Iteration Cycle</h3><ol><li>Write a first-draft prompt</li><li>Run it and identify the first point of failure</li><li>Hypothesise why it failed: missing context? Wrong format? Vague goal?</li><li>Change one variable at a time</li><li>Re-run and compare</li><li>Repeat until output meets your standard</li></ol><div class='callout'><div class='callout-label'>📏 Rule of Thumb</div><p>If you need to change the prompt more than 5 times for the same task, the task is too complex for a single prompt. Break it into a chain.</p></div>
+</div>
+
+    <div id="exercises"><div class="module"><div class="module-label">Practice</div><h2>Exercises</h2><div class="exercise"><div class="exercise-num">Exercise 1</div><h4>Exercise 1 — Rewrite a Weak Prompt (10 min)</h4><p>Take a prompt you have used before that gave a mediocre result. Apply the five-element structure (role, goal, context, format, constraints) and re-run it. Compare the outputs.</p></div><div class="exercise"><div class="exercise-num">Exercise 2</div><h4>Exercise 2 — Add Few-Shot Examples (10 min)</h4><p>Pick any task you do repeatedly with Claude. Write 2–3 input/output examples and add them to your prompt. Note the improvement in consistency.</p></div><div class="exercise"><div class="exercise-num">Exercise 3</div><h4>Exercise 3 — Chain of Thought (10 min)</h4><p>Ask Claude a complex question without chain-of-thought. Then add 'Think step by step before answering.' Compare the depth and accuracy of both responses.</p></div><div class="exercise"><div class="exercise-num">Exercise 4</div><h4>Exercise 4 — Self-Critique Loop (15 min)</h4><p>Get Claude to produce any output. Then prompt: 'Review your answer for accuracy and completeness. What would you change?' Apply the feedback and compare the results.</p></div></div></div>
+
+    <div id="summary"><div class="summary-box"><h2>Key Takeaways</h2><ul><li>Strong prompts have five elements: role, goal, context, format, constraints.</li><li>Examples outperform descriptions every time.</li><li>Chain-of-thought improves accuracy on hard tasks.</li><li>XML tags make outputs parseable for automated workflows.</li><li>Iterate one variable at a time when debugging prompts.</li><li>Save your best prompts as skills.</li></ul></div></div>
+
+    <div style="margin-top:2rem;padding:1.5rem;background:white;border-radius:12px;
+      display:flex;justify-content:space-between;align-items:center;
+      box-shadow:0 1px 4px rgba(0,0,0,.07);">
+      <a href="dispatch.html" style="color:var(--accent);font-weight:600;">← Claude Desktop & Dispatch</a>
+      <a href="index.html" style="color:var(--accent);font-weight:600;">↑ All Lessons</a>
+      <a href="code-and-repos.html" style="color:var(--accent);font-weight:600;">Working With Code and Repos →</a>
+    </div>
+      <a href="index.html" style="color:var(--accent);font-weight:600;">↑ Back to All Lessons</a>
+    </div>
+  </main>
+</div>
+
+<div class="page-footer">Nick Bullardbradley · Claude Training Curriculum · 2026</div>
+
+</body>
+</html>

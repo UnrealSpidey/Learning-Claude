@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evaluating & Debugging AI Outputs — Claude Training</title>
+<style>
+:root { --accent:#B22222; --light:#FDECEA; --dark:#5C0000; }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #1a1a1a; background: #f8f9fa; line-height: 1.7; font-size: 16px; }
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* TOPBAR */
+.topbar { background: var(--accent); color: white; padding: 0 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 56px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+.topbar-left { display: flex; align-items: center; gap: 1rem; }
+.topbar-logo { font-weight: 700; font-size: 1.1rem; letter-spacing: .5px; }
+.topbar-sep { opacity: .4; }
+.topbar-title { font-size: .9rem; opacity: .9; }
+.topbar-home { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+  color: white; padding: .35rem .9rem; border-radius: 6px; font-size: .85rem;
+  cursor: pointer; transition: background .2s; white-space: nowrap; }
+.topbar-home:hover { background: rgba(255,255,255,.25); text-decoration: none; }
+
+/* HERO */
+.hero { background: linear-gradient(135deg, var(--dark) 0%, var(--accent) 100%);
+  color: white; padding: 3.5rem 2rem 2.5rem; text-align: center; }
+.hero-label { font-size: .8rem; text-transform: uppercase; letter-spacing: 2px;
+  opacity: .7; margin-bottom: .5rem; }
+.hero-num { font-size: 1rem; opacity: .8; margin-bottom: .25rem; }
+.hero-title { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; margin-bottom: .5rem; }
+.hero-sub { font-size: 1.05rem; opacity: .8; margin-bottom: 1.5rem; }
+.hero-pills { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+.pill { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+  padding: .3rem .85rem; border-radius: 20px; font-size: .82rem; }
+
+/* LAYOUT */
+.layout { display: grid; grid-template-columns: 260px 1fr; max-width: 1100px;
+  margin: 2rem auto; gap: 2rem; padding: 0 1.5rem 4rem; }
+@media(max-width:768px){.layout{grid-template-columns:1fr;}.sidenav{display:none;}}
+
+/* SIDENAV */
+.sidenav { position: sticky; top: 72px; align-self: start;
+  background: white; border-radius: 12px; padding: 1.25rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08); max-height: calc(100vh - 90px); overflow-y: auto; }
+.sidenav-title { font-size: .7rem; text-transform: uppercase; letter-spacing: 1.5px;
+  color: #888; margin-bottom: .75rem; font-weight: 600; }
+.sidenav ul { list-style: none; }
+.sidenav li { margin-bottom: .1rem; }
+.sidenav a { display: block; padding: .4rem .75rem; border-radius: 6px; font-size: .875rem;
+  color: #444; transition: all .15s; }
+.sidenav a:hover { background: var(--light); color: var(--accent); text-decoration: none; }
+.sidenav .mod-link { font-weight: 600; color: #222; }
+.sidenav .sub-link { padding-left: 1.25rem; font-size: .83rem; color: #666; }
+
+/* CONTENT */
+.content { min-width: 0; }
+.module { background: white; border-radius: 12px; padding: 2rem 2.25rem;
+  margin-bottom: 1.75rem; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+.module-label { font-size: .7rem; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--accent); font-weight: 700; margin-bottom: .25rem; }
+.module h2 { font-size: 1.4rem; font-weight: 700; color: var(--dark); margin-bottom: 1rem;
+  padding-bottom: .6rem; border-bottom: 2px solid var(--light); }
+.module h3 { font-size: 1.05rem; font-weight: 700; color: var(--accent);
+  margin: 1.5rem 0 .6rem; }
+.module p { margin-bottom: .85rem; color: #333; }
+.module ul, .module ol { padding-left: 1.4rem; margin-bottom: .85rem; }
+.module li { margin-bottom: .4rem; color: #333; }
+
+/* CALLOUT */
+.callout { background: var(--light); border-left: 4px solid var(--accent);
+  border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; margin: 1.25rem 0; }
+.callout-label { font-weight: 700; font-size: .9rem; color: var(--dark); margin-bottom: .4rem; }
+.callout p { margin-bottom: 0; font-size: .92rem; }
+
+/* TABLE */
+.tbl-wrap { overflow-x: auto; margin: 1.25rem 0; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+thead tr { background: var(--accent); color: white; }
+thead th { padding: .65rem 1rem; text-align: left; font-weight: 600; }
+tbody tr:nth-child(odd) { background: var(--light); }
+tbody tr:nth-child(even) { background: white; }
+tbody td { padding: .55rem 1rem; border-bottom: 1px solid #e8e8e8; vertical-align: top; }
+tbody td:first-child { font-weight: 600; }
+
+/* EXERCISE */
+.exercise { border: 2px solid var(--light); border-radius: 10px;
+  padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+.exercise-num { font-size: .75rem; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--accent); font-weight: 700; margin-bottom: .3rem; }
+.exercise h4 { font-size: 1rem; font-weight: 700; margin-bottom: .5rem; color: var(--dark); }
+.exercise p { margin: 0; font-size: .92rem; }
+
+/* SUMMARY */
+.summary-box { background: linear-gradient(135deg, var(--dark), var(--accent));
+  color: white; border-radius: 12px; padding: 2rem; margin-top: 1.5rem; }
+.summary-box h2 { color: white; border-bottom-color: rgba(255,255,255,.2); }
+.summary-box ul { color: rgba(255,255,255,.9); }
+.summary-box li { margin-bottom: .5rem; }
+
+/* FOOTER */
+.page-footer { text-align: center; padding: 2rem; color: #888; font-size: .85rem; }
+
+/* INDEX SPECIFIC */
+.index-hero { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: white; padding: 4rem 2rem 3rem; text-align: center; }
+.index-hero h1 { font-size: clamp(2rem,5vw,3.2rem); font-weight: 800; margin-bottom: .75rem; }
+.index-hero p { font-size: 1.1rem; opacity: .8; max-width: 600px; margin: 0 auto 2rem; }
+.index-stats { display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; }
+.stat { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+  border-radius: 10px; padding: 1rem 2rem; text-align: center; }
+.stat-num { font-size: 2rem; font-weight: 800; }
+.stat-label { font-size: .8rem; opacity: .7; text-transform: uppercase; letter-spacing: 1px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr));
+  gap: 1.5rem; max-width: 1100px; margin: 3rem auto; padding: 0 1.5rem 4rem; }
+.card { background: white; border-radius: 14px; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08); transition: transform .2s, box-shadow .2s;
+  display: flex; flex-direction: column; }
+.card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.12); text-decoration: none; }
+.card-header { padding: 1.5rem; color: white; position: relative; overflow: hidden; }
+.card-header::after { content: attr(data-num); position: absolute; right: 1rem; top: 50%;
+  transform: translateY(-50%); font-size: 5rem; font-weight: 900;
+  opacity: .12; line-height: 1; }
+.card-num { font-size: .7rem; text-transform: uppercase; letter-spacing: 2px;
+  opacity: .8; margin-bottom: .3rem; }
+.card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: .4rem; }
+.card-sub { font-size: .85rem; opacity: .8; }
+.card-body { padding: 1.25rem 1.5rem; flex: 1; }
+.card-body p { font-size: .88rem; color: #555; margin-bottom: .75rem; }
+.card-pills { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
+.card-pill { background: #f0f0f0; color: #555; padding: .2rem .65rem;
+  border-radius: 12px; font-size: .75rem; }
+.card-footer { padding: .85rem 1.5rem; border-top: 1px solid #f0f0f0;
+  display: flex; align-items: center; justify-content: space-between; }
+.card-link { font-size: .85rem; font-weight: 600; }
+.card-arr { font-size: 1.1rem; transition: transform .2s; }
+.card:hover .card-arr { transform: translateX(4px); }
+
+.index-footer { text-align: center; padding: 3rem 1rem;
+  color: #888; font-size: .9rem; border-top: 1px solid #e8e8e8; }
+
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-logo">Claude Training</span>
+    <span class="topbar-sep">|</span>
+    <span class="topbar-title">Evaluating & Debugging AI Outputs</span>
+  </div>
+  <a href="index.html" class="topbar-home">← All Lessons</a>
+</div>
+
+<div class="hero">
+  <div class="hero-label">Training Plan</div>
+  <div class="hero-num">Advanced Systems</div>
+  <div class="hero-title">Evaluating & Debugging AI Outputs</div>
+  <div class="hero-sub">Knowing When Claude Got It Wrong — and Fixing It</div>
+  <div class="hero-pills">
+    <span class="pill">⏱ ~2 hrs</span>
+    <span class="pill">📊 Intermediate–Advanced</span>
+    <span class="pill">Self-paced</span>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidenav">
+    <div class="sidenav-title">Contents</div>
+    <ul>
+      <li><a href="#overview" class="mod-link">Overview</a></li>
+      <li><a href="#m1" class="mod-link">How Claude Fails</a><ul><li><a href="#m1s1" class="sub-link">Taxonomy of AI Failures</a></li><li><a href="#m1s2" class="sub-link">Why Hallucination Happens</a></li></ul></li><li><a href="#m2" class="mod-link">Detecting Errors</a><ul><li><a href="#m2s1" class="sub-link">High-Risk Output Categories</a></li><li><a href="#m2s2" class="sub-link">Asking Claude to Verify Itself</a></li></ul></li><li><a href="#m3" class="mod-link">Writing Evaluation Cases</a><ul><li><a href="#m3s1" class="sub-link">The Five-Case Eval Set</a></li><li><a href="#m3s2" class="sub-link">Scoring Your Evals</a></li></ul></li><li><a href="#m4" class="mod-link">Debugging Prompts and Skills</a><ul><li><a href="#m4s1" class="sub-link">The Debugging Process</a></li><li><a href="#m4s2" class="sub-link">Root Cause Diagnosis</a></li></ul></li><li><a href="#m5" class="mod-link">Building a Quality Mindset</a><ul><li><a href="#m5s1" class="sub-link">Trust, But Verify</a></li><li><a href="#m5s2" class="sub-link">Personal Quality Checklist</a></li></ul></li>
+      <li><a href="#exercises" class="mod-link">Exercises</a></li>
+      <li><a href="#summary" class="mod-link">Key Takeaways</a></li>
+    </ul>
+    <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #eee;">
+      <div style="display:flex;flex-direction:column;gap:.5rem;"><a href="agents.html">← Creating & Leveraging Agents</a></div>
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="module" id="overview">
+      <div class="module-label">Overview</div>
+      <h2>What You Will Learn</h2>
+      <p>Claude is powerful but not infallible. This lesson teaches you how to catch errors, prevent hallucinations, write rigorous evaluation cases for your skills, and debug failures systematically.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem;">
+        <span class="pill">How Claude fails and why</span><span class="pill">Hallucination detection</span><span class="pill">Writing evaluation cases</span><span class="pill">Debugging prompts and skills</span><span class="pill">Verifying code output</span><span class="pill">Building a quality mindset</span>
+      </div>
+    </div>
+
+    
+<div class="module" id="m1">
+  <div class="module-label">Module</div>
+  <h2>How Claude Fails</h2>
+  <h3 id="m1s1">Taxonomy of AI Failures</h3><div class='tbl-wrap'><table><thead><tr><th>Failure Type</th><th>What It Looks Like</th><th>Risk Level</th></tr></thead><tbody><tr><td>Hallucination</td><td>Confident, plausible, but wrong facts or references</td><td>High — easy to miss</td></tr><tr><td>Over-confidence</td><td>Claude states uncertain things as definite</td><td>Medium — look for hedging language</td></tr><tr><td>Under-specification</td><td>Output is technically correct but not what you needed</td><td>Medium — define success criteria upfront</td></tr><tr><td>Context loss</td><td>Claude forgets earlier instructions in long sessions</td><td>Low–medium — restate key facts</td></tr><tr><td>Prompt injection</td><td>Instructions in external content alter Claude's behaviour</td><td>High in automated pipelines</td></tr></tbody></table></div><h3 id="m1s2">Why Hallucination Happens</h3><p>Claude generates text that is statistically likely given the input. When it lacks strong evidence for a fact, it produces a plausible-sounding answer rather than admitting uncertainty.</p><div class='callout'><div class='callout-label'>⚠️ The Confidence Trap</div><p>Hallucinations are dangerous because they sound confident. Claude rarely says 'I made this up.' Watch for: specific dates, statistics, citations, URLs, and proper nouns — these are highest-risk hallucination areas.</p></div>
+</div>
+<div class="module" id="m2">
+  <div class="module-label">Module</div>
+  <h2>Detecting Errors</h2>
+  <h3 id="m2s1">High-Risk Output Categories</h3><div class='tbl-wrap'><table><thead><tr><th>Category</th><th>What to Verify</th><th>How to Verify</th></tr></thead><tbody><tr><td>Factual claims</td><td>Names, dates, statistics, events</td><td>Web search or primary source</td></tr><tr><td>Code</td><td>Does it run? Does it handle edge cases?</td><td>Execute it; add tests</td></tr><tr><td>Citations/URLs</td><td>Does the source exist?</td><td>Open the link</td></tr><tr><td>Calculations</td><td>Is the maths correct?</td><td>Run it in a calculator or Python</td></tr><tr><td>Legal/financial</td><td>Is this accurate and current?</td><td>Consult a professional; do not rely on Claude alone</td></tr></tbody></table></div><h3 id="m2s2">Asking Claude to Verify Itself</h3><ul><li>'For every factual claim in your response, indicate your confidence level: high, medium, or low.'</li><li>'Which parts of this answer are you least certain about?'</li><li>'What assumptions did you make? List them explicitly.'</li></ul><div class='callout'><div class='callout-label'>🚩 The Red Flag Rule</div><p>If Claude says 'I am not certain but...' or 'I believe...', treat that claim as unverified until you have checked it.</p></div>
+</div>
+<div class="module" id="m3">
+  <div class="module-label">Module</div>
+  <h2>Writing Evaluation Cases</h2>
+  <h3 id="m3s1">The Five-Case Eval Set</h3><div class='tbl-wrap'><table><thead><tr><th>Case Type</th><th>Description</th><th>Purpose</th></tr></thead><tbody><tr><td>Happy path</td><td>The typical, expected input</td><td>Confirms the skill works at all</td></tr><tr><td>Edge case</td><td>Valid but unusual input</td><td>Finds boundary failures</td></tr><tr><td>Hard case</td><td>Ambiguous or complex input requiring real reasoning</td><td>Measures quality ceiling</td></tr><tr><td>Negative case</td><td>Input the skill should reject or handle gracefully</td><td>Confirms error handling</td></tr><tr><td>Adversarial case</td><td>Input designed to confuse or mislead the agent</td><td>Tests robustness</td></tr></tbody></table></div><h3 id="m3s2">Scoring Your Evals</h3><div class='tbl-wrap'><table><thead><tr><th>Dimension</th><th>1 (Poor)</th><th>3 (Acceptable)</th><th>5 (Excellent)</th></tr></thead><tbody><tr><td>Accuracy</td><td>Multiple wrong facts</td><td>Mostly accurate, minor errors</td><td>Fully accurate, all claims verified</td></tr><tr><td>Completeness</td><td>Misses major points</td><td>Covers main points</td><td>Comprehensive, nothing important missing</td></tr><tr><td>Format</td><td>Ignores format spec</td><td>Mostly follows format</td><td>Exactly matches format spec</td></tr><tr><td>Reliability</td><td>Different output every run</td><td>Usually consistent</td><td>Identical structure every run</td></tr></tbody></table></div>
+</div>
+<div class="module" id="m4">
+  <div class="module-label">Module</div>
+  <h2>Debugging Prompts and Skills</h2>
+  <h3 id="m4s1">The Debugging Process</h3><ol><li>Run the eval that is failing</li><li>Identify the first point of failure in the output</li><li>Hypothesise the root cause: missing context, wrong tool, unclear goal, missing constraint?</li><li>Make exactly one change to the prompt</li><li>Re-run the failing eval</li><li>Check that passing evals still pass</li><li>Repeat until all evals pass</li></ol><div class='callout'><div class='callout-label'>⚠️ Critical Rule</div><p>Change one thing at a time. If you rewrite the whole prompt, you will not know which change fixed the problem or which change broke something else.</p></div><h3 id="m4s2">Root Cause Diagnosis</h3><div class='tbl-wrap'><table><thead><tr><th>Symptom</th><th>Likely Root Cause</th><th>Fix</th></tr></thead><tbody><tr><td>Output is off-topic</td><td>Goal is too vague</td><td>Add specific success criteria and an example</td></tr><tr><td>Output is inconsistent across runs</td><td>No format constraint</td><td>Specify output format explicitly with an example</td></tr><tr><td>Claude asks many questions</td><td>Missing context</td><td>Add more background to the prompt</td></tr><tr><td>Claude over-reaches</td><td>No constraints</td><td>Add explicit 'do not' rules</td></tr><tr><td>Quality degrades in long sessions</td><td>Context overflow</td><td>Break into smaller agents; summarise between steps</td></tr></tbody></table></div>
+</div>
+<div class="module" id="m5">
+  <div class="module-label">Module</div>
+  <h2>Building a Quality Mindset</h2>
+  <h3 id="m5s1">Trust, But Verify</h3><div class='tbl-wrap'><table><thead><tr><th>Stakes Level</th><th>Approach</th></tr></thead><tbody><tr><td>Low stakes (draft, internal notes)</td><td>Accept Claude's output with a quick read</td></tr><tr><td>Medium stakes (external comms, reports)</td><td>Verify key claims; ask Claude to flag uncertainty</td></tr><tr><td>High stakes (code in production, legal, financial)</td><td>Verify independently; expert review required; treat Claude as a first draft only</td></tr></tbody></table></div><h3 id="m5s2">Personal Quality Checklist</h3><ul><li>Is every factual claim plausible and sourced?</li><li>Does the output match the format I specified?</li><li>Did Claude do what I asked, or what it thought I meant?</li><li>Are there edge cases or failure modes I can spot?</li><li>Would I be comfortable if this went out under my name?</li></ul>
+</div>
+
+    <div id="exercises"><div class="module"><div class="module-label">Practice</div><h2>Exercises</h2><div class="exercise"><div class="exercise-num">Exercise 1</div><h4>Exercise 1 — Hallucination Hunt (15 min)</h4><p>Ask Claude a complex factual question in an area you know well. Identify three specific claims and verify each independently. How many were accurate? How many were wrong but confidently stated?</p></div><div class="exercise"><div class="exercise-num">Exercise 2</div><h4>Exercise 2 — Write Evals for Your Research Skill (20 min)</h4><p>Create five evaluation cases for your custom research skill using the five-case template. Run each one. Score them using the rubric. Identify the most common failure mode.</p></div><div class="exercise"><div class="exercise-num">Exercise 3</div><h4>Exercise 3 — Debug a Failing Skill (20 min)</h4><p>Take the lowest-scoring eval from Exercise 2. Apply the root cause diagnosis table. Make one targeted change to the prompt. Re-run the failing case and verify you have not broken any others.</p></div><div class="exercise"><div class="exercise-num">Exercise 4</div><h4>Exercise 4 — Adversarial Prompt (15 min)</h4><p>Design a prompt specifically intended to make Claude fail. Run it. Observe what happens. Then update your skill to handle it gracefully.</p></div></div></div>
+
+    <div id="summary"><div class="summary-box"><h2>Key Takeaways</h2><ul><li>Claude's most dangerous failure mode is confident hallucination — it sounds right but is wrong.</li><li>Ask Claude to flag its own uncertainty before you review.</li><li>Write five eval cases per skill: happy, edge, hard, negative, adversarial.</li><li>Change one thing at a time when debugging.</li><li>Define your trust level by the stakes: low stakes = quick read; high stakes = independent verification.</li></ul></div></div>
+
+    <div style="margin-top:2rem;padding:1.5rem;background:white;border-radius:12px;
+      display:flex;justify-content:space-between;align-items:center;
+      box-shadow:0 1px 4px rgba(0,0,0,.07);">
+      <a href="agents.html" style="color:var(--accent);font-weight:600;">← Creating & Leveraging Agents</a>
+      <a href="index.html" style="color:var(--accent);font-weight:600;">↑ All Lessons</a>
+      <span></span>
+    </div>
+      <a href="index.html" style="color:var(--accent);font-weight:600;">↑ Back to All Lessons</a>
+    </div>
+  </main>
+</div>
+
+<div class="page-footer">Nick Bullardbradley · Claude Training Curriculum · 2026</div>
+
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data, Files & Document Intelligence — Claude Training</title>
+<style>
+:root { --accent:#1F3A8F; --light:#E8EBF8; --dark:#0D1F52; }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #1a1a1a; background: #f8f9fa; line-height: 1.7; font-size: 16px; }
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* TOPBAR */
+.topbar { background: var(--accent); color: white; padding: 0 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 56px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+.topbar-left { display: flex; align-items: center; gap: 1rem; }
+.topbar-logo { font-weight: 700; font-size: 1.1rem; letter-spacing: .5px; }
+.topbar-sep { opacity: .4; }
+.topbar-title { font-size: .9rem; opacity: .9; }
+.topbar-home { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+  color: white; padding: .35rem .9rem; border-radius: 6px; font-size: .85rem;
+  cursor: pointer; transition: background .2s; white-space: nowrap; }
+.topbar-home:hover { background: rgba(255,255,255,.25); text-decoration: none; }
+
+/* HERO */
+.hero { background: linear-gradient(135deg, var(--dark) 0%, var(--accent) 100%);
+  color: white; padding: 3.5rem 2rem 2.5rem; text-align: center; }
+.hero-label { font-size: .8rem; text-transform: uppercase; letter-spacing: 2px;
+  opacity: .7; margin-bottom: .5rem; }
+.hero-num { font-size: 1rem; opacity: .8; margin-bottom: .25rem; }
+.hero-title { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; margin-bottom: .5rem; }
+.hero-sub { font-size: 1.05rem; opacity: .8; margin-bottom: 1.5rem; }
+.hero-pills { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+.pill { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+  padding: .3rem .85rem; border-radius: 20px; font-size: .82rem; }
+
+/* LAYOUT */
+.layout { display: grid; grid-template-columns: 260px 1fr; max-width: 1100px;
+  margin: 2rem auto; gap: 2rem; padding: 0 1.5rem 4rem; }
+@media(max-width:768px){.layout{grid-template-columns:1fr;}.sidenav{display:none;}}
+
+/* SIDENAV */
+.sidenav { position: sticky; top: 72px; align-self: start;
+  background: white; border-radius: 12px; padding: 1.25rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08); max-height: calc(100vh - 90px); overflow-y: auto; }
+.sidenav-title { font-size: .7rem; text-transform: uppercase; letter-spacing: 1.5px;
+  color: #888; margin-bottom: .75rem; font-weight: 600; }
+.sidenav ul { list-style: none; }
+.sidenav li { margin-bottom: .1rem; }
+.sidenav a { display: block; padding: .4rem .75rem; border-radius: 6px; font-size: .875rem;
+  color: #444; transition: all .15s; }
+.sidenav a:hover { background: var(--light); color: var(--accent); text-decoration: none; }
+.sidenav .mod-link { font-weight: 600; color: #222; }
+.sidenav .sub-link { padding-left: 1.25rem; font-size: .83rem; color: #666; }
+
+/* CONTENT */
+.content { min-width: 0; }
+.module { background: white; border-radius: 12px; padding: 2rem 2.25rem;
+  margin-bottom: 1.75rem; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+.module-label { font-size: .7rem; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--accent); font-weight: 700; margin-bottom: .25rem; }
+.module h2 { font-size: 1.4rem; font-weight: 700; color: var(--dark); margin-bottom: 1rem;
+  padding-bottom: .6rem; border-bottom: 2px solid var(--light); }
+.module h3 { font-size: 1.05rem; font-weight: 700; color: var(--accent);
+  margin: 1.5rem 0 .6rem; }
+.module p { margin-bottom: .85rem; color: #333; }
+.module ul, .module ol { padding-left: 1.4rem; margin-bottom: .85rem; }
+.module li { margin-bottom: .4rem; color: #333; }
+
+/* CALLOUT */
+.callout { background: var(--light); border-left: 4px solid var(--accent);
+  border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; margin: 1.25rem 0; }
+.callout-label { font-weight: 700; font-size: .9rem; color: var(--dark); margin-bottom: .4rem; }
+.callout p { margin-bottom: 0; font-size: .92rem; }
+
+/* TABLE */
+.tbl-wrap { overflow-x: auto; margin: 1.25rem 0; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+thead tr { background: var(--accent); color: white; }
+thead th { padding: .65rem 1rem; text-align: left; font-weight: 600; }
+tbody tr:nth-child(odd) { background: var(--light); }
+tbody tr:nth-child(even) { background: white; }
+tbody td { padding: .55rem 1rem; border-bottom: 1px solid #e8e8e8; vertical-align: top; }
+tbody td:first-child { font-weight: 600; }
+
+/* EXERCISE */
+.exercise { border: 2px solid var(--light); border-radius: 10px;
+  padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+.exercise-num { font-size: .75rem; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--accent); font-weight: 700; margin-bottom: .3rem; }
+.exercise h4 { font-size: 1rem; font-weight: 700; margin-bottom: .5rem; color: var(--dark); }
+.exercise p { margin: 0; font-size: .92rem; }
+
+/* SUMMARY */
+.summary-box { background: linear-gradient(135deg, var(--dark), var(--accent));
+  color: white; border-radius: 12px; padding: 2rem; margin-top: 1.5rem; }
+.summary-box h2 { color: white; border-bottom-color: rgba(255,255,255,.2); }
+.summary-box ul { color: rgba(255,255,255,.9); }
+.summary-box li { margin-bottom: .5rem; }
+
+/* FOOTER */
+.page-footer { text-align: center; padding: 2rem; color: #888; font-size: .85rem; }
+
+/* INDEX SPECIFIC */
+.index-hero { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: white; padding: 4rem 2rem 3rem; text-align: center; }
+.index-hero h1 { font-size: clamp(2rem,5vw,3.2rem); font-weight: 800; margin-bottom: .75rem; }
+.index-hero p { font-size: 1.1rem; opacity: .8; max-width: 600px; margin: 0 auto 2rem; }
+.index-stats { display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; }
+.stat { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+  border-radius: 10px; padding: 1rem 2rem; text-align: center; }
+.stat-num { font-size: 2rem; font-weight: 800; }
+.stat-label { font-size: .8rem; opacity: .7; text-transform: uppercase; letter-spacing: 1px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr));
+  gap: 1.5rem; max-width: 1100px; margin: 3rem auto; padding: 0 1.5rem 4rem; }
+.card { background: white; border-radius: 14px; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08); transition: transform .2s, box-shadow .2s;
+  display: flex; flex-direction: column; }
+.card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.12); text-decoration: none; }
+.card-header { padding: 1.5rem; color: white; position: relative; overflow: hidden; }
+.card-header::after { content: attr(data-num); position: absolute; right: 1rem; top: 50%;
+  transform: translateY(-50%); font-size: 5rem; font-weight: 900;
+  opacity: .12; line-height: 1; }
+.card-num { font-size: .7rem; text-transform: uppercase; letter-spacing: 2px;
+  opacity: .8; margin-bottom: .3rem; }
+.card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: .4rem; }
+.card-sub { font-size: .85rem; opacity: .8; }
+.card-body { padding: 1.25rem 1.5rem; flex: 1; }
+.card-body p { font-size: .88rem; color: #555; margin-bottom: .75rem; }
+.card-pills { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
+.card-pill { background: #f0f0f0; color: #555; padding: .2rem .65rem;
+  border-radius: 12px; font-size: .75rem; }
+.card-footer { padding: .85rem 1.5rem; border-top: 1px solid #f0f0f0;
+  display: flex; align-items: center; justify-content: space-between; }
+.card-link { font-size: .85rem; font-weight: 600; }
+.card-arr { font-size: 1.1rem; transition: transform .2s; }
+.card:hover .card-arr { transform: translateX(4px); }
+
+.index-footer { text-align: center; padding: 3rem 1rem;
+  color: #888; font-size: .9rem; border-top: 1px solid #e8e8e8; }
+
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-logo">Claude Training</span>
+    <span class="topbar-sep">|</span>
+    <span class="topbar-title">Data, Files & Document Intelligence</span>
+  </div>
+  <a href="index.html" class="topbar-home">← All Lessons</a>
+</div>
+
+<div class="hero">
+  <div class="hero-label">Training Plan</div>
+  <div class="hero-num">Practical Skills</div>
+  <div class="hero-title">Data, Files & Document Intelligence</div>
+  <div class="hero-sub">Extracting Insight From Everything You Have</div>
+  <div class="hero-pills">
+    <span class="pill">⏱ ~90 min</span>
+    <span class="pill">📊 Beginner–Intermediate</span>
+    <span class="pill">Self-paced</span>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidenav">
+    <div class="sidenav-title">Contents</div>
+    <ul>
+      <li><a href="#overview" class="mod-link">Overview</a></li>
+      <li><a href="#m1" class="mod-link">Understanding Your Document Skills</a><ul><li><a href="#m1s1" class="sub-link">Skills Overview</a></li><li><a href="#m1s2" class="sub-link">Choosing the Right Output Format</a></li></ul></li><li><a href="#m2" class="mod-link">Working With PDFs</a><ul><li><a href="#m2s1" class="sub-link">What Claude Can Do With PDFs</a></li><li><a href="#m2s2" class="sub-link">Extracting Structured Data From PDFs</a></li></ul></li><li><a href="#m3" class="mod-link">Working With Word Documents</a><ul><li><a href="#m3s1" class="sub-link">Creating Professional Word Documents</a></li><li><a href="#m3s2" class="sub-link">Editing Existing Word Documents</a></li></ul></li><li><a href="#m4" class="mod-link">Working With Spreadsheets</a><ul><li><a href="#m4s1" class="sub-link">Analysing Data With Natural Language</a></li></ul></li><li><a href="#m5" class="mod-link">Document Pipelines</a><ul><li><a href="#m5s1" class="sub-link">What Is a Document Pipeline?</a></li><li><a href="#m5s2" class="sub-link">Designing a Document Pipeline Prompt</a></li></ul></li>
+      <li><a href="#exercises" class="mod-link">Exercises</a></li>
+      <li><a href="#summary" class="mod-link">Key Takeaways</a></li>
+    </ul>
+    <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #eee;">
+      <div style="display:flex;flex-direction:column;gap:.5rem;"><a href="code-and-repos.html">← Working With Code and Repos</a><a href="automation-stack.html">Building a Personal Automation Stack →</a></div>
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="module" id="overview">
+      <div class="module-label">Overview</div>
+      <h2>What You Will Learn</h2>
+      <p>This lesson covers Claude's capabilities for working with files and documents — reading spreadsheets, parsing PDFs, comparing documents, extracting structured data, and generating professional deliverables. You will learn when to use each skill and how to chain them for complex document workflows.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem;">
+        <span class="pill">Reading and extracting from PDFs, Word docs, and spreadsheets</span><span class="pill">Generating professional documents with skills</span><span class="pill">Comparing and merging documents</span><span class="pill">Structuring unstructured data</span><span class="pill">Building document pipelines</span>
+      </div>
+    </div>
+
+    
+<div class="module" id="m1">
+  <div class="module-label">Module</div>
+  <h2>Understanding Your Document Skills</h2>
+  <h3 id="m1s1">Skills Overview</h3><div class='tbl-wrap'><table><thead><tr><th>Skill</th><th>Input Formats</th><th>Best For</th></tr></thead><tbody><tr><td>pdf</td><td>.pdf</td><td>Extract text/tables, merge PDFs, create new PDFs, fill forms</td></tr><tr><td>docx</td><td>.docx, .doc</td><td>Create or edit Word documents with professional formatting</td></tr><tr><td>xlsx</td><td>.xlsx, .xls, .csv</td><td>Read data, create spreadsheets, add formulas and charts</td></tr><tr><td>pptx</td><td>.pptx</td><td>Create slide decks, extract content from presentations</td></tr></tbody></table></div><h3 id="m1s2">Choosing the Right Output Format</h3><div class='tbl-wrap'><table><thead><tr><th>Content Type</th><th>Best Format</th><th>Reason</th></tr></thead><tbody><tr><td>Data, numbers, comparisons</td><td>.xlsx</td><td>Sortable, filterable, formula support</td></tr><tr><td>Prose report, analysis, letter</td><td>.docx</td><td>Professional formatting, track changes, comments</td></tr><tr><td>Presentation to share</td><td>.pptx</td><td>Slide-by-slide structure, speaker notes</td></tr><tr><td>Reference document, archival</td><td>.pdf</td><td>Fixed layout, universal compatibility</td></tr><tr><td>Quick notes, internal use</td><td>.md</td><td>Lightweight, readable in any editor</td></tr></tbody></table></div>
+</div>
+<div class="module" id="m2">
+  <div class="module-label">Module</div>
+  <h2>Working With PDFs</h2>
+  <h3 id="m2s1">What Claude Can Do With PDFs</h3><ul><li>Extract all text, preserving structure and headings</li><li>Pull specific tables as structured data</li><li>Summarise long documents with configurable depth</li><li>Compare two PDF versions and highlight differences</li><li>Merge multiple PDFs into one</li><li>Fill in form fields (with your approval)</li><li>Create new PDFs with custom layouts and branding</li></ul><h3 id="m2s2">Extracting Structured Data From PDFs</h3><ul><li>'Read this invoice PDF and extract: vendor name, date, line items, and total. Save as a spreadsheet.'</li><li>'This PDF contains a data table on pages 3–5. Extract it as a CSV.'</li><li>'Read all five of these PDFs and combine the data tables into one spreadsheet.'</li></ul><div class='callout'><div class='callout-label'>📦 Batch Processing Tip</div><p>If you have a folder of similar PDFs, Claude can process them all in one task: 'Read all PDFs in this folder and extract [specific data] from each into a single spreadsheet with one row per file.'</p></div>
+</div>
+<div class="module" id="m3">
+  <div class="module-label">Module</div>
+  <h2>Working With Word Documents</h2>
+  <h3 id="m3s1">Creating Professional Word Documents</h3><p>The docx skill produces properly formatted Word documents with headings, tables, page numbers, headers, footers, and proper typography.</p><div class='tbl-wrap'><table><thead><tr><th>Task</th><th>What to Say</th></tr></thead><tbody><tr><td>Report or analysis</td><td>'Create a Word doc report on [topic] with headings, a summary table, and page numbers'</td></tr><tr><td>Meeting notes template</td><td>'Create a Word doc meeting notes template for [meeting type]'</td></tr><tr><td>Project brief</td><td>'Write a project brief for [project] as a Word doc'</td></tr><tr><td>Process documentation</td><td>'Document the steps for [process] as a Word doc with numbered steps and callout boxes'</td></tr></tbody></table></div><h3 id="m3s2">Editing Existing Word Documents</h3><ul><li>'Update the dates in this document from 2024 to 2026'</li><li>'Add a new section after the introduction covering [topic]'</li><li>'Reformat this document to use proper heading styles and add a table of contents'</li></ul><div class='callout'><div class='callout-label'>📝 Track Changes</div><p>Ask Claude to use tracked changes when editing: 'Edit this document with tracked changes so I can accept or reject each modification.'</p></div>
+</div>
+<div class="module" id="m4">
+  <div class="module-label">Module</div>
+  <h2>Working With Spreadsheets</h2>
+  <h3 id="m4s1">Analysing Data With Natural Language</h3><ul><li>'Which products have the highest margin in this spreadsheet?'</li><li>'Show me a month-by-month trend of the revenue column'</li><li>'Find all rows where the status is pending and the date is more than 30 days ago'</li><li>'Compare this year's sales to last year's by region'</li></ul><div class='callout'><div class='callout-label'>🧹 Data Cleaning Prompt</div><p>'Clean this spreadsheet: standardise date formats to YYYY-MM-DD, remove duplicate rows, fill blank category cells with Unknown, and flag any rows where the total column does not match the sum of the line items.'</p></div>
+</div>
+<div class="module" id="m5">
+  <div class="module-label">Module</div>
+  <h2>Document Pipelines</h2>
+  <h3 id="m5s1">What Is a Document Pipeline?</h3><p>A document pipeline is a sequence of automated steps that transforms raw inputs into polished outputs.</p><div class='tbl-wrap'><table><thead><tr><th>Pipeline</th><th>Input</th><th>Output</th></tr></thead><tbody><tr><td>Invoice processing</td><td>Folder of invoice PDFs</td><td>Spreadsheet with all invoice data + summary totals</td></tr><tr><td>Research synthesis</td><td>Set of research PDFs or URLs</td><td>Word doc report with key findings</td></tr><tr><td>Meeting to action</td><td>Meeting notes text file</td><td>Word doc with agenda, decisions, and action items</td></tr><tr><td>Data to deck</td><td>Spreadsheet of data</td><td>Presentation with charts and key insights per slide</td></tr><tr><td>Repo to documentation</td><td>Code files from a repo</td><td>Word doc with architecture overview and API reference</td></tr></tbody></table></div><h3 id="m5s2">Designing a Document Pipeline Prompt</h3><ol><li>State all input files and their locations</li><li>Describe each transformation step</li><li>Specify the output format and where to save it</li><li>Include any quality standards (language level, length, formatting)</li></ol><div class='callout'><div class='callout-label'>📋 Example Pipeline Prompt</div><p>'Read all five PDF reports in my outputs folder. For each, extract: the executive summary, key metrics, and recommendations. Combine all five into a single Word document with: a cover page, one section per report, and a final synthesis section that compares findings across all reports. Save as Synthesis_Report.docx.'</p></div>
+</div>
+
+    <div id="exercises"><div class="module"><div class="module-label">Practice</div><h2>Exercises</h2><div class="exercise"><div class="exercise-num">Exercise 1</div><h4>Exercise 1 — PDF Extraction (10 min)</h4><p>Find any PDF on your computer. Ask Claude to extract the key information and save it as a structured Word doc or spreadsheet. Verify the output against the original.</p></div><div class="exercise"><div class="exercise-num">Exercise 2</div><h4>Exercise 2 — Create a Professional Document (15 min)</h4><p>Ask Claude to create a Word doc summary of your marshmello project: what it does, its architecture, key dependencies, and open issues. Specify: professional formatting, a table of contents, and headings per section.</p></div><div class="exercise"><div class="exercise-num">Exercise 3</div><h4>Exercise 3 — Data Analysis (15 min)</h4><p>Find any CSV or spreadsheet on your computer. Ask Claude to: clean the data, add a summary row, identify any outliers, and create a formatted Excel file.</p></div><div class="exercise"><div class="exercise-num">Exercise 4</div><h4>Exercise 4 — Build a Mini Pipeline (20 min)</h4><p>Design a document pipeline relevant to your work. Write the pipeline prompt using the template from Module 5. Run it and evaluate the output quality.</p></div></div></div>
+
+    <div id="summary"><div class="summary-box"><h2>Key Takeaways</h2><ul><li>Each document skill has a sweet spot — use the right one for the job.</li><li>PDF extraction unlocks data that is otherwise locked in static files.</li><li>The docx skill produces professional Word documents automatically.</li><li>Ask analytical questions about your spreadsheets in plain English.</li><li>Document pipelines are the highest-leverage way to use document skills — one prompt, many files, polished output.</li></ul></div></div>
+
+    <div style="margin-top:2rem;padding:1.5rem;background:white;border-radius:12px;
+      display:flex;justify-content:space-between;align-items:center;
+      box-shadow:0 1px 4px rgba(0,0,0,.07);">
+      <a href="code-and-repos.html" style="color:var(--accent);font-weight:600;">← Working With Code and Repos</a>
+      <a href="index.html" style="color:var(--accent);font-weight:600;">↑ All Lessons</a>
+      <a href="automation-stack.html" style="color:var(--accent);font-weight:600;">Building a Personal Automation Stack →</a>
+    </div>
+      <a href="index.html" style="color:var(--accent);font-weight:600;">↑ Back to All Lessons</a>
+    </div>
+  </main>
+</div>
+
+<div class="page-footer">Nick Bullardbradley · Claude Training Curriculum · 2026</div>
+
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creating & Leveraging Agents — Claude Training</title>
+<style>
+:root { --accent:#1B6B3A; --light:#EAF4EE; --dark:#0D3320; }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #1a1a1a; background: #f8f9fa; line-height: 1.7; font-size: 16px; }
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* TOPBAR */
+.topbar { background: var(--accent); color: white; padding: 0 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 56px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+.topbar-left { display: flex; align-items: center; gap: 1rem; }
+.topbar-logo { font-weight: 700; font-size: 1.1rem; letter-spacing: .5px; }
+.topbar-sep { opacity: .4; }
+.topbar-title { font-size: .9rem; opacity: .9; }
+.topbar-home { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+  color: white; padding: .35rem .9rem; border-radius: 6px; font-size: .85rem;
+  cursor: pointer; transition: background .2s; white-space: nowrap; }
+.topbar-home:hover { background: rgba(255,255,255,.25); text-decoration: none; }
+
+/* HERO */
+.hero { background: linear-gradient(135deg, var(--dark) 0%, var(--accent) 100%);
+  color: white; padding: 3.5rem 2rem 2.5rem; text-align: center; }
+.hero-label { font-size: .8rem; text-transform: uppercase; letter-spacing: 2px;
+  opacity: .7; margin-bottom: .5rem; }
+.hero-num { font-size: 1rem; opacity: .8; margin-bottom: .25rem; }
+.hero-title { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; margin-bottom: .5rem; }
+.hero-sub { font-size: 1.05rem; opacity: .8; margin-bottom: 1.5rem; }
+.hero-pills { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+.pill { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+  padding: .3rem .85rem; border-radius: 20px; font-size: .82rem; }
+
+/* LAYOUT */
+.layout { display: grid; grid-template-columns: 260px 1fr; max-width: 1100px;
+  margin: 2rem auto; gap: 2rem; padding: 0 1.5rem 4rem; }
+@media(max-width:768px){.layout{grid-template-columns:1fr;}.sidenav{display:none;}}
+
+/* SIDENAV */
+.sidenav { position: sticky; top: 72px; align-self: start;
+  background: white; border-radius: 12px; padding: 1.25rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08); max-height: calc(100vh - 90px); overflow-y: auto; }
+.sidenav-title { font-size: .7rem; text-transform: uppercase; letter-spacing: 1.5px;
+  color: #888; margin-bottom: .75rem; font-weight: 600; }
+.sidenav ul { list-style: none; }
+.sidenav li { margin-bottom: .1rem; }
+.sidenav a { display: block; padding: .4rem .75rem; border-radius: 6px; font-size: .875rem;
+  color: #444; transition: all .15s; }
+.sidenav a:hover { background: var(--light); color: var(--accent); text-decoration: none; }
+.sidenav .mod-link { font-weight: 600; color: #222; }
+.sidenav .sub-link { padding-left: 1.25rem; font-size: .83rem; color: #666; }
+
+/* CONTENT */
+.content { min-width: 0; }
+.module { background: white; border-radius: 12px; padding: 2rem 2.25rem;
+  margin-bottom: 1.75rem; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+.module-label { font-size: .7rem; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--accent); font-weight: 700; margin-bottom: .25rem; }
+.module h2 { font-size: 1.4rem; font-weight: 700; color: var(--dark); margin-bottom: 1rem;
+  padding-bottom: .6rem; border-bottom: 2px solid var(--light); }
+.module h3 { font-size: 1.05rem; font-weight: 700; color: var(--accent);
+  margin: 1.5rem 0 .6rem; }
+.module p { margin-bottom: .85rem; color: #333; }
+.module ul, .module ol { padding-left: 1.4rem; margin-bottom: .85rem; }
+.module li { margin-bottom: .4rem; color: #333; }
+
+/* CALLOUT */
+.callout { background: var(--light); border-left: 4px solid var(--accent);
+  border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; margin: 1.25rem 0; }
+.callout-label { font-weight: 700; font-size: .9rem; color: var(--dark); margin-bottom: .4rem; }
+.callout p { margin-bottom: 0; font-size: .92rem; }
+
+/* TABLE */
+.tbl-wrap { overflow-x: auto; margin: 1.25rem 0; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+thead tr { background: var(--accent); color: white; }
+thead th { padding: .65rem 1rem; text-align: left; font-weight: 600; }
+tbody tr:nth-child(odd) { background: var(--light); }
+tbody tr:nth-child(even) { background: white; }
+tbody td { padding: .55rem 1rem; border-bottom: 1px solid #e8e8e8; vertical-align: top; }
+tbody td:first-child { font-weight: 600; }
+
+/* EXERCISE */
+.exercise { border: 2px solid var(--light); border-radius: 10px;
+  padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+.exercise-num { font-size: .75rem; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--accent); font-weight: 700; margin-bottom: .3rem; }
+.exercise h4 { font-size: 1rem; font-weight: 700; margin-bottom: .5rem; color: var(--dark); }
+.exercise p { margin: 0; font-size: .92rem; }
+
+/* SUMMARY */
+.summary-box { background: linear-gradient(135deg, var(--dark), var(--accent));
+  color: white; border-radius: 12px; padding: 2rem; margin-top: 1.5rem; }
+.summary-box h2 { color: white; border-bottom-color: rgba(255,255,255,.2); }
+.summary-box ul { color: rgba(255,255,255,.9); }
+.summary-box li { margin-bottom: .5rem; }
+
+/* FOOTER */
+.page-footer { text-align: center; padding: 2rem; color: #888; font-size: .85rem; }
+
+/* INDEX SPECIFIC */
+.index-hero { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: white; padding: 4rem 2rem 3rem; text-align: center; }
+.index-hero h1 { font-size: clamp(2rem,5vw,3.2rem); font-weight: 800; margin-bottom: .75rem; }
+.index-hero p { font-size: 1.1rem; opacity: .8; max-width: 600px; margin: 0 auto 2rem; }
+.index-stats { display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; }
+.stat { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+  border-radius: 10px; padding: 1rem 2rem; text-align: center; }
+.stat-num { font-size: 2rem; font-weight: 800; }
+.stat-label { font-size: .8rem; opacity: .7; text-transform: uppercase; letter-spacing: 1px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr));
+  gap: 1.5rem; max-width: 1100px; margin: 3rem auto; padding: 0 1.5rem 4rem; }
+.card { background: white; border-radius: 14px; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08); transition: transform .2s, box-shadow .2s;
+  display: flex; flex-direction: column; }
+.card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.12); text-decoration: none; }
+.card-header { padding: 1.5rem; color: white; position: relative; overflow: hidden; }
+.card-header::after { content: attr(data-num); position: absolute; right: 1rem; top: 50%;
+  transform: translateY(-50%); font-size: 5rem; font-weight: 900;
+  opacity: .12; line-height: 1; }
+.card-num { font-size: .7rem; text-transform: uppercase; letter-spacing: 2px;
+  opacity: .8; margin-bottom: .3rem; }
+.card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: .4rem; }
+.card-sub { font-size: .85rem; opacity: .8; }
+.card-body { padding: 1.25rem 1.5rem; flex: 1; }
+.card-body p { font-size: .88rem; color: #555; margin-bottom: .75rem; }
+.card-pills { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
+.card-pill { background: #f0f0f0; color: #555; padding: .2rem .65rem;
+  border-radius: 12px; font-size: .75rem; }
+.card-footer { padding: .85rem 1.5rem; border-top: 1px solid #f0f0f0;
+  display: flex; align-items: center; justify-content: space-between; }
+.card-link { font-size: .85rem; font-weight: 600; }
+.card-arr { font-size: 1.1rem; transition: transform .2s; }
+.card:hover .card-arr { transform: translateX(4px); }
+
+.index-footer { text-align: center; padding: 3rem 1rem;
+  color: #888; font-size: .9rem; border-top: 1px solid #e8e8e8; }
+
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-logo">Claude Training</span>
+    <span class="topbar-sep">|</span>
+    <span class="topbar-title">Creating & Leveraging Agents</span>
+  </div>
+  <a href="index.html" class="topbar-home">← All Lessons</a>
+</div>
+
+<div class="hero">
+  <div class="hero-label">Training Plan</div>
+  <div class="hero-num">Advanced Systems</div>
+  <div class="hero-title">Creating & Leveraging Agents</div>
+  <div class="hero-sub">Building Effective AI Agents Step by Step</div>
+  <div class="hero-pills">
+    <span class="pill">⏱ ~2 hrs</span>
+    <span class="pill">📊 Intermediate</span>
+    <span class="pill">Self-paced</span>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidenav">
+    <div class="sidenav-title">Contents</div>
+    <ul>
+      <li><a href="#overview" class="mod-link">Overview</a></li>
+      <li><a href="#m1" class="mod-link">What Is an Agent?</a><ul><li><a href="#m1s1" class="sub-link">Agents vs. Chatbots</a></li><li><a href="#m1s2" class="sub-link">The Agent Loop</a></li><li><a href="#m1s3" class="sub-link">Agent Types in Claude Desktop</a></li></ul></li><li><a href="#m2" class="mod-link">The Claude Agent SDK</a><ul><li><a href="#m2s1" class="sub-link">Core Concepts</a></li><li><a href="#m2s2" class="sub-link">Available Tools</a></li></ul></li><li><a href="#m3" class="mod-link">Writing Effective Agent Prompts</a><ul><li><a href="#m3s1" class="sub-link">Anatomy of a Good Agent Prompt</a></li><li><a href="#m3s2" class="sub-link">High-Performance Prompt Principles</a></li><li><a href="#m3s3" class="sub-link">Common Prompt Anti-Patterns</a></li></ul></li><li><a href="#m4" class="mod-link">Building Custom Skills</a><ul><li><a href="#m4s1" class="sub-link">What Is a Skill?</a></li><li><a href="#m4s2" class="sub-link">Anatomy of a SKILL.md</a></li></ul></li><li><a href="#m5" class="mod-link">Multi-Agent Orchestration</a><ul><li><a href="#m5s1" class="sub-link">Orchestration Patterns</a></li></ul></li><li><a href="#m6" class="mod-link">Evaluation & Iteration</a><ul><li><a href="#m6s1" class="sub-link">How to Know If Your Agent Is Working</a></li><li><a href="#m6s2" class="sub-link">Common Failure Modes & Fixes</a></li></ul></li>
+      <li><a href="#exercises" class="mod-link">Exercises</a></li>
+      <li><a href="#summary" class="mod-link">Key Takeaways</a></li>
+    </ul>
+    <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #eee;">
+      <div style="display:flex;flex-direction:column;gap:.5rem;"><a href="mcp-tools.html">← MCP & Custom Tool Integration</a><a href="evaluating-outputs.html">Evaluating & Debugging AI Outputs →</a></div>
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="module" id="overview">
+      <div class="module-label">Overview</div>
+      <h2>What You Will Learn</h2>
+      <p>This lesson teaches you how to design, build, and orchestrate agents using Claude and the Claude Agent SDK. You will learn what makes a great agent, how to compose multi-agent systems, how to write effective prompts and skills, and how to evaluate agent performance.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem;">
+        <span class="pill">What agents are and how they differ from chatbots</span><span class="pill">The Claude Agent SDK fundamentals</span><span class="pill">Writing effective agent prompts and skills</span><span class="pill">Multi-agent orchestration patterns</span><span class="pill">Evaluation and iteration strategies</span>
+      </div>
+    </div>
+
+    
+<div class="module" id="m1">
+  <div class="module-label">Module</div>
+  <h2>What Is an Agent?</h2>
+  <h3 id="m1s1">Agents vs. Chatbots</h3><p>A chatbot responds to a single message. An agent pursues a goal autonomously, using tools and making decisions across multiple steps.</p><div class='tbl-wrap'><table><thead><tr><th>Dimension</th><th>Agent</th><th>Chatbot</th></tr></thead><tbody><tr><td>Scope</td><td>Multi-step tasks</td><td>Single exchanges</td></tr><tr><td>Tools</td><td>Calls APIs, reads files, searches</td><td>Just generates text</td></tr><tr><td>Memory</td><td>Tracks state across steps</td><td>Starts fresh each turn</td></tr><tr><td>Autonomy</td><td>Decides what to do next</td><td>Waits for the next prompt</td></tr></tbody></table></div><h3 id="m1s2">The Agent Loop</h3><p>Every agent operates on a core loop:</p><ol><li>Receive a goal or task</li><li>Decide which tool or action to take next</li><li>Execute the action (web search, file read, API call, etc.)</li><li>Observe the result</li><li>Decide: is the goal complete? If not, return to step 2</li><li>Report results back to the user or calling system</li></ol><div class='callout'><div class='callout-label'>💡 Why This Matters</div><p>Good agent design means giving the agent the right tools, a clear goal, and enough context to make good decisions at each step. Vague goals and missing tools cause agents to loop or hallucinate.</p></div><h3 id="m1s3">Agent Types in Claude Desktop</h3><div class='tbl-wrap'><table><thead><tr><th>Agent Type</th><th>What It Does</th><th>When to Use It</th></tr></thead><tbody><tr><td>General Purpose</td><td>Research, multi-step tasks, file work</td><td>Default for most tasks</td></tr><tr><td>Explore</td><td>Fast codebase exploration</td><td>When you need quick code answers</td></tr><tr><td>Plan</td><td>Software architecture and trade-offs</td><td>Before starting a new feature</td></tr><tr><td>Code Task</td><td>Full session with git worktree isolation</td><td>Any repo modification work</td></tr><tr><td>Custom Skill</td><td>Domain-specific agent you define</td><td>Repeatable org-specific workflows</td></tr></tbody></table></div>
+</div>
+<div class="module" id="m2">
+  <div class="module-label">Module</div>
+  <h2>The Claude Agent SDK</h2>
+  <h3 id="m2s1">Core Concepts</h3><div class='tbl-wrap'><table><thead><tr><th>Concept</th><th>Description</th></tr></thead><tbody><tr><td>Subagent</td><td>A child agent spawned to handle a specific subtask autonomously</td></tr><tr><td>Tool</td><td>A capability the agent can invoke (file read, bash, web search, etc.)</td></tr><tr><td>Session</td><td>A stateful conversation context the agent works within</td></tr><tr><td>SKILL.md</td><td>A markdown file that defines the agent's behaviour, tools, and instructions</td></tr><tr><td>Worktree</td><td>An isolated git branch the code agent works in, preventing conflicts</td></tr><tr><td>Dispatch</td><td>The orchestrator that routes work to the right agent type</td></tr></tbody></table></div><h3 id="m2s2">Available Tools</h3><div class='tbl-wrap'><table><thead><tr><th>Tool</th><th>Best For</th><th>Avoid When</th></tr></thead><tbody><tr><td>Read</td><td>Reading specific files you know the path to</td><td>Exploring unknown directories</td></tr><tr><td>Glob</td><td>Finding files by name pattern (e.g. **/*.py)</td><td>Searching file contents</td></tr><tr><td>Grep</td><td>Searching file contents by regex</td><td>Reading full files</td></tr><tr><td>Bash</td><td>Running commands, scripts, installs</td><td>Simple file reads (use Read instead)</td></tr><tr><td>WebSearch</td><td>Current events, documentation, recent news</td><td>Internal codebase questions</td></tr><tr><td>Edit</td><td>Making targeted changes to existing files</td><td>Full file rewrites</td></tr></tbody></table></div>
+</div>
+<div class="module" id="m3">
+  <div class="module-label">Module</div>
+  <h2>Writing Effective Agent Prompts</h2>
+  <h3 id="m3s1">Anatomy of a Good Agent Prompt</h3><div class='callout'><div class='callout-label'>📋 Prompt Structure Template</div><p>1. <strong>Role</strong> — what kind of agent is this?<br>2. <strong>Goal</strong> — what is the agent trying to achieve?<br>3. <strong>Tools</strong> — which tools should it use, and in what order?<br>4. <strong>Output format</strong> — what should the final result look like?<br>5. <strong>Constraints</strong> — what should the agent NOT do?</p></div><h3 id="m3s2">High-Performance Prompt Principles</h3><ul><li>Be specific about the goal, not the steps — let the agent decide the path</li><li>Provide examples of good and bad outputs — more powerful than descriptions</li><li>Include negative examples — tell the agent what to avoid</li><li>Ask for step-by-step reasoning before the final answer</li><li>Request output in a specific structure (XML tags, JSON, markdown headers)</li><li>Give the agent a way to ask for clarification rather than guess</li></ul><h3 id="m3s3">Common Prompt Anti-Patterns</h3><div class='tbl-wrap'><table><thead><tr><th>Anti-Pattern</th><th>Why It Fails</th></tr></thead><tbody><tr><td>'Do your best'</td><td>No measurable success criteria — the agent doesn't know when to stop</td></tr><tr><td>Over-specifying steps</td><td>Prevents the agent from finding a better approach</td></tr><tr><td>Missing context</td><td>Agent makes assumptions that don't match your environment</td></tr><tr><td>No output format</td><td>Results are inconsistent and hard to act on</td></tr><tr><td>No constraints</td><td>Agent may over-reach, make changes you didn't want, or loop</td></tr></tbody></table></div>
+</div>
+<div class="module" id="m4">
+  <div class="module-label">Module</div>
+  <h2>Building Custom Skills</h2>
+  <h3 id="m4s1">What Is a Skill?</h3><p>A skill is a reusable agent definition stored as a SKILL.md file. It packages a specific capability so you can invoke it repeatedly without re-prompting.</p><p>Your setup includes the <strong>skill-creator</strong> skill. Use it to build new skills by describing what the skill should do, what inputs it needs, what tools it should use, and what the output should look like.</p><h3 id="m4s2">Anatomy of a SKILL.md</h3><ol><li>Frontmatter — title, description, trigger conditions</li><li>Context — what environment the skill expects</li><li>Instructions — step-by-step behaviour for the agent</li><li>Output specification — format and contents of the final deliverable</li><li>Error handling — what to do when things go wrong</li></ol>
+</div>
+<div class="module" id="m5">
+  <div class="module-label">Module</div>
+  <h2>Multi-Agent Orchestration</h2>
+  <h3 id="m5s1">Orchestration Patterns</h3><div class='tbl-wrap'><table><thead><tr><th>Pattern</th><th>How It Works</th></tr></thead><tbody><tr><td>Sequential</td><td>Agent A completes its work, passes output to Agent B, then C. Use when each step depends on the last.</td></tr><tr><td>Parallel</td><td>Multiple agents run simultaneously on independent subtasks. Use to speed up large research or analysis jobs.</td></tr><tr><td>Supervisor</td><td>An orchestrator agent breaks the goal into subtasks and spawns specialised subagents for each.</td></tr><tr><td>Verification</td><td>After the main agent finishes, a second agent independently checks the output.</td></tr><tr><td>Iterative</td><td>An agent produces a draft, a second agent critiques it, the first revises. Repeat until quality threshold met.</td></tr></tbody></table></div>
+</div>
+<div class="module" id="m6">
+  <div class="module-label">Module</div>
+  <h2>Evaluation & Iteration</h2>
+  <h3 id="m6s1">How to Know If Your Agent Is Working</h3><p>Good agents need measurable success criteria. Before building, define:</p><ul><li>What does a correct output look like? (example)</li><li>What does a wrong or incomplete output look like? (counter-example)</li><li>What is the minimum acceptable quality bar?</li></ul><div class='callout'><div class='callout-label'>📊 Eval Framework</div><p>For each skill or agent, create 3–5 test cases: one easy, one medium, one hard, one edge case, and one adversarial. Run all five and look for patterns in where the agent fails.</p></div><h3 id="m6s2">Common Failure Modes & Fixes</h3><div class='tbl-wrap'><table><thead><tr><th>Failure Mode</th><th>Symptom</th><th>Fix</th></tr></thead><tbody><tr><td>Under-specified goal</td><td>Agent asks many questions or produces shallow output</td><td>Add concrete examples of desired output</td></tr><tr><td>Missing tool</td><td>Agent says 'I cannot access...'</td><td>Add the right tool or MCP connector</td></tr><tr><td>Context overflow</td><td>Agent forgets early instructions mid-task</td><td>Break into smaller sequential agents</td></tr><tr><td>Hallucination</td><td>Agent confidently states wrong facts</td><td>Add a verification step; require citations</td></tr></tbody></table></div>
+</div>
+
+    <div id="exercises"><div class="module"><div class="module-label">Practice</div><h2>Exercises</h2><div class="exercise"><div class="exercise-num">Exercise 1</div><h4>Exercise 1 — Locate & Read a Skill (10 min)</h4><p>Find your custom research skill. Read its SKILL.md and identify: the goal statement, the tools it uses, and the output format. Write one improvement you would make.</p></div><div class="exercise"><div class="exercise-num">Exercise 2</div><h4>Exercise 2 — Improve a Skill with skill-creator (15 min)</h4><p>Tell Claude: 'Use the skill-creator to improve my research skill to also produce a structured markdown summary with key findings, open questions, and recommended next steps.'</p></div><div class="exercise"><div class="exercise-num">Exercise 3</div><h4>Exercise 3 — Build a New Skill from Scratch (20 min)</h4><p>Ask Claude to build a 'code review' skill that reads a repo, identifies potential bugs, and outputs a prioritised list as a Word document.</p></div><div class="exercise"><div class="exercise-num">Exercise 4</div><h4>Exercise 4 — Multi-Agent Workflow (20 min)</h4><p>Chain two agents: first use the Explore agent to map the marshmello repo structure. Then feed those findings to the Plan agent to produce an implementation plan for a new feature.</p></div><div class="exercise"><div class="exercise-num">Exercise 5</div><h4>Exercise 5 — Evaluate Your Agent (15 min)</h4><p>Take the code review skill from Exercise 3. Run it on three different repos. Score each output 1–5. Identify the most common failure and update the skill prompt to address it.</p></div></div></div>
+
+    <div id="summary"><div class="summary-box"><h2>Key Takeaways</h2><ul><li>Agents are goal-directed loops, not chatbots.</li><li>Good prompts specify the goal, tools, output format, and constraints — with examples.</li><li>Skills are reusable agent definitions: invest in making them specific and testable.</li><li>Multi-agent systems scale to complex work — use orchestration patterns intentionally.</li><li>Evaluation is not optional — define success criteria before you build, not after.</li></ul></div></div>
+
+    <div style="margin-top:2rem;padding:1.5rem;background:white;border-radius:12px;
+      display:flex;justify-content:space-between;align-items:center;
+      box-shadow:0 1px 4px rgba(0,0,0,.07);">
+      <a href="mcp-tools.html" style="color:var(--accent);font-weight:600;">← MCP & Custom Tool Integration</a>
+      <a href="index.html" style="color:var(--accent);font-weight:600;">↑ All Lessons</a>
+      <a href="evaluating-outputs.html" style="color:var(--accent);font-weight:600;">Evaluating & Debugging AI Outputs →</a>
+    </div>
+      <a href="index.html" style="color:var(--accent);font-weight:600;">↑ Back to All Lessons</a>
+    </div>
+  </main>
+</div>
+
+<div class="page-footer">Nick Bullardbradley · Claude Training Curriculum · 2026</div>
+
+</body>
+</html>

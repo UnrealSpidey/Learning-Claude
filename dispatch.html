@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Desktop & Dispatch — Claude Training</title>
+<style>
+:root { --accent:#2E75B6; --light:#EBF3FA; --dark:#1F3864; }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #1a1a1a; background: #f8f9fa; line-height: 1.7; font-size: 16px; }
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* TOPBAR */
+.topbar { background: var(--accent); color: white; padding: 0 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 56px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+.topbar-left { display: flex; align-items: center; gap: 1rem; }
+.topbar-logo { font-weight: 700; font-size: 1.1rem; letter-spacing: .5px; }
+.topbar-sep { opacity: .4; }
+.topbar-title { font-size: .9rem; opacity: .9; }
+.topbar-home { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+  color: white; padding: .35rem .9rem; border-radius: 6px; font-size: .85rem;
+  cursor: pointer; transition: background .2s; white-space: nowrap; }
+.topbar-home:hover { background: rgba(255,255,255,.25); text-decoration: none; }
+
+/* HERO */
+.hero { background: linear-gradient(135deg, var(--dark) 0%, var(--accent) 100%);
+  color: white; padding: 3.5rem 2rem 2.5rem; text-align: center; }
+.hero-label { font-size: .8rem; text-transform: uppercase; letter-spacing: 2px;
+  opacity: .7; margin-bottom: .5rem; }
+.hero-num { font-size: 1rem; opacity: .8; margin-bottom: .25rem; }
+.hero-title { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; margin-bottom: .5rem; }
+.hero-sub { font-size: 1.05rem; opacity: .8; margin-bottom: 1.5rem; }
+.hero-pills { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+.pill { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+  padding: .3rem .85rem; border-radius: 20px; font-size: .82rem; }
+
+/* LAYOUT */
+.layout { display: grid; grid-template-columns: 260px 1fr; max-width: 1100px;
+  margin: 2rem auto; gap: 2rem; padding: 0 1.5rem 4rem; }
+@media(max-width:768px){.layout{grid-template-columns:1fr;}.sidenav{display:none;}}
+
+/* SIDENAV */
+.sidenav { position: sticky; top: 72px; align-self: start;
+  background: white; border-radius: 12px; padding: 1.25rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08); max-height: calc(100vh - 90px); overflow-y: auto; }
+.sidenav-title { font-size: .7rem; text-transform: uppercase; letter-spacing: 1.5px;
+  color: #888; margin-bottom: .75rem; font-weight: 600; }
+.sidenav ul { list-style: none; }
+.sidenav li { margin-bottom: .1rem; }
+.sidenav a { display: block; padding: .4rem .75rem; border-radius: 6px; font-size: .875rem;
+  color: #444; transition: all .15s; }
+.sidenav a:hover { background: var(--light); color: var(--accent); text-decoration: none; }
+.sidenav .mod-link { font-weight: 600; color: #222; }
+.sidenav .sub-link { padding-left: 1.25rem; font-size: .83rem; color: #666; }
+
+/* CONTENT */
+.content { min-width: 0; }
+.module { background: white; border-radius: 12px; padding: 2rem 2.25rem;
+  margin-bottom: 1.75rem; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+.module-label { font-size: .7rem; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--accent); font-weight: 700; margin-bottom: .25rem; }
+.module h2 { font-size: 1.4rem; font-weight: 700; color: var(--dark); margin-bottom: 1rem;
+  padding-bottom: .6rem; border-bottom: 2px solid var(--light); }
+.module h3 { font-size: 1.05rem; font-weight: 700; color: var(--accent);
+  margin: 1.5rem 0 .6rem; }
+.module p { margin-bottom: .85rem; color: #333; }
+.module ul, .module ol { padding-left: 1.4rem; margin-bottom: .85rem; }
+.module li { margin-bottom: .4rem; color: #333; }
+
+/* CALLOUT */
+.callout { background: var(--light); border-left: 4px solid var(--accent);
+  border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; margin: 1.25rem 0; }
+.callout-label { font-weight: 700; font-size: .9rem; color: var(--dark); margin-bottom: .4rem; }
+.callout p { margin-bottom: 0; font-size: .92rem; }
+
+/* TABLE */
+.tbl-wrap { overflow-x: auto; margin: 1.25rem 0; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+thead tr { background: var(--accent); color: white; }
+thead th { padding: .65rem 1rem; text-align: left; font-weight: 600; }
+tbody tr:nth-child(odd) { background: var(--light); }
+tbody tr:nth-child(even) { background: white; }
+tbody td { padding: .55rem 1rem; border-bottom: 1px solid #e8e8e8; vertical-align: top; }
+tbody td:first-child { font-weight: 600; }
+
+/* EXERCISE */
+.exercise { border: 2px solid var(--light); border-radius: 10px;
+  padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+.exercise-num { font-size: .75rem; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--accent); font-weight: 700; margin-bottom: .3rem; }
+.exercise h4 { font-size: 1rem; font-weight: 700; margin-bottom: .5rem; color: var(--dark); }
+.exercise p { margin: 0; font-size: .92rem; }
+
+/* SUMMARY */
+.summary-box { background: linear-gradient(135deg, var(--dark), var(--accent));
+  color: white; border-radius: 12px; padding: 2rem; margin-top: 1.5rem; }
+.summary-box h2 { color: white; border-bottom-color: rgba(255,255,255,.2); }
+.summary-box ul { color: rgba(255,255,255,.9); }
+.summary-box li { margin-bottom: .5rem; }
+
+/* FOOTER */
+.page-footer { text-align: center; padding: 2rem; color: #888; font-size: .85rem; }
+
+/* INDEX SPECIFIC */
+.index-hero { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: white; padding: 4rem 2rem 3rem; text-align: center; }
+.index-hero h1 { font-size: clamp(2rem,5vw,3.2rem); font-weight: 800; margin-bottom: .75rem; }
+.index-hero p { font-size: 1.1rem; opacity: .8; max-width: 600px; margin: 0 auto 2rem; }
+.index-stats { display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; }
+.stat { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+  border-radius: 10px; padding: 1rem 2rem; text-align: center; }
+.stat-num { font-size: 2rem; font-weight: 800; }
+.stat-label { font-size: .8rem; opacity: .7; text-transform: uppercase; letter-spacing: 1px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr));
+  gap: 1.5rem; max-width: 1100px; margin: 3rem auto; padding: 0 1.5rem 4rem; }
+.card { background: white; border-radius: 14px; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08); transition: transform .2s, box-shadow .2s;
+  display: flex; flex-direction: column; }
+.card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.12); text-decoration: none; }
+.card-header { padding: 1.5rem; color: white; position: relative; overflow: hidden; }
+.card-header::after { content: attr(data-num); position: absolute; right: 1rem; top: 50%;
+  transform: translateY(-50%); font-size: 5rem; font-weight: 900;
+  opacity: .12; line-height: 1; }
+.card-num { font-size: .7rem; text-transform: uppercase; letter-spacing: 2px;
+  opacity: .8; margin-bottom: .3rem; }
+.card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: .4rem; }
+.card-sub { font-size: .85rem; opacity: .8; }
+.card-body { padding: 1.25rem 1.5rem; flex: 1; }
+.card-body p { font-size: .88rem; color: #555; margin-bottom: .75rem; }
+.card-pills { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
+.card-pill { background: #f0f0f0; color: #555; padding: .2rem .65rem;
+  border-radius: 12px; font-size: .75rem; }
+.card-footer { padding: .85rem 1.5rem; border-top: 1px solid #f0f0f0;
+  display: flex; align-items: center; justify-content: space-between; }
+.card-link { font-size: .85rem; font-weight: 600; }
+.card-arr { font-size: 1.1rem; transition: transform .2s; }
+.card:hover .card-arr { transform: translateX(4px); }
+
+.index-footer { text-align: center; padding: 3rem 1rem;
+  color: #888; font-size: .9rem; border-top: 1px solid #e8e8e8; }
+
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-logo">Claude Training</span>
+    <span class="topbar-sep">|</span>
+    <span class="topbar-title">Claude Desktop & Dispatch</span>
+  </div>
+  <a href="index.html" class="topbar-home">← All Lessons</a>
+</div>
+
+<div class="hero">
+  <div class="hero-label">Training Plan</div>
+  <div class="hero-num">Foundation</div>
+  <div class="hero-title">Claude Desktop & Dispatch</div>
+  <div class="hero-sub">Taking Full Advantage of Claude Desktop</div>
+  <div class="hero-pills">
+    <span class="pill">⏱ ~90 min</span>
+    <span class="pill">📊 Beginner</span>
+    <span class="pill">Self-paced</span>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidenav">
+    <div class="sidenav-title">Contents</div>
+    <ul>
+      <li><a href="#overview" class="mod-link">Overview</a></li>
+      <li><a href="#m1" class="mod-link">Understanding Claude Desktop</a><ul><li><a href="#m1s1" class="sub-link">What Is Claude Desktop?</a></li><li><a href="#m1s2" class="sub-link">The Dispatch Interface</a></li></ul></li><li><a href="#m2" class="mod-link">Delegating Tasks Effectively</a><ul><li><a href="#m2s1" class="sub-link">How to Give Claude a Good Task</a></li><li><a href="#m2s2" class="sub-link">Types of Tasks You Can Delegate</a></li><li><a href="#m2s3" class="sub-link">Following Up on Running Tasks</a></li></ul></li><li><a href="#m3" class="mod-link">Connecting Your Tools</a><ul><li><a href="#m3s1" class="sub-link">MCP Connectors</a></li><li><a href="#m3s2" class="sub-link">File System Access</a></li></ul></li><li><a href="#m4" class="mod-link">Skills & Automation</a><ul><li><a href="#m4s1" class="sub-link">Built-in Skills</a></li><li><a href="#m4s2" class="sub-link">Scheduled Tasks</a></li></ul></li><li><a href="#m5" class="mod-link">Advanced Tips & Best Practices</a><ul><li><a href="#m5s1" class="sub-link">Getting the Best Results</a></li><li><a href="#m5s2" class="sub-link">Security & Privacy</a></li></ul></li>
+      <li><a href="#exercises" class="mod-link">Exercises</a></li>
+      <li><a href="#summary" class="mod-link">Key Takeaways</a></li>
+    </ul>
+    <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #eee;">
+      <div style="display:flex;flex-direction:column;gap:.5rem;"><a href="model-family.html">← The Claude Model Family</a><a href="prompt-engineering.html">Prompt Engineering for Power Users →</a></div>
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="module" id="overview">
+      <div class="module-label">Overview</div>
+      <h2>What You Will Learn</h2>
+      <p>This lesson walks you through the core capabilities of Claude Desktop and its Dispatch feature. By the end, you will know how to delegate tasks, manage ongoing work, connect to your tools, and get the most out of Claude as a hands-free assistant running on your behalf.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem;">
+        <span class="pill">How Dispatch works and routes tasks</span><span class="pill">Managing sessions and follow-ups</span><span class="pill">Connecting external services via MCP</span><span class="pill">File access and document creation</span><span class="pill">Using skills and scheduled tasks</span>
+      </div>
+    </div>
+
+    
+<div class="module" id="m1">
+  <div class="module-label">Module</div>
+  <h2>Understanding Claude Desktop</h2>
+  <h3 id="m1s1">What Is Claude Desktop?</h3><p>Claude Desktop is a native app for Windows and macOS that gives you persistent, always-available access to Claude. Unlike the web interface, the desktop app supports:</p><ul><li><strong>Background task execution</strong> — Claude keeps working while you do other things</li><li><strong>File system access</strong> — read, write, and organise files on your computer</li><li><strong>MCP connectors</strong> — integrate with Slack, GitHub, Google Drive, Asana, and more</li><li><strong>Scheduled tasks</strong> — automate recurring workflows without any code</li><li><strong>The Dispatch tab</strong> — a mobile-first coordination layer for delegating tasks</li></ul><h3 id="m1s2">The Dispatch Interface</h3><p>Dispatch is the orchestration layer inside Claude Desktop. Think of it as texting a knowledgeable assistant who coordinates work on your behalf.</p><div class='tbl-wrap'><table><thead><tr><th>Concept</th><th>What It Means</th></tr></thead><tbody><tr><td>Task Sessions</td><td>Each request spins up an isolated session. Claude works autonomously, then reports back.</td></tr><tr><td>Code Sessions</td><td>For repo work — Claude opens a git worktree, makes changes, runs tests.</td></tr><tr><td>SendUserMessage</td><td>Everything Claude says to you flows through this — it is how you receive results.</td></tr><tr><td>Session Routing</td><td>Follow-ups go to existing sessions; new goals start fresh sessions.</td></tr></tbody></table></div>
+</div>
+<div class="module" id="m2">
+  <div class="module-label">Module</div>
+  <h2>Delegating Tasks Effectively</h2>
+  <h3 id="m2s1">How to Give Claude a Good Task</h3><p>Claude performs best when requests are specific about the <em>goal</em>, not the method. You do not need to script each step — describe the outcome you want.</p><div class='callout'><div class='callout-label'>✅ Good Example</div><p>"Go through my Downloads folder, find any invoices from the last 3 months, and create a summary spreadsheet with vendor, amount, and date."</p></div><div class='callout'><div class='callout-label'>⚠️ Less Effective</div><p>"Open File Explorer, navigate to Downloads, look at each file..." — Over-specifying steps prevents Claude from finding better approaches.</p></div><h3 id="m2s2">Types of Tasks You Can Delegate</h3><ul><li><strong>Research</strong> — web searches, reading pages, summarising findings</li><li><strong>File work</strong> — reading, organising, creating Word docs, spreadsheets, PDFs, presentations</li><li><strong>Code tasks</strong> — bug fixes, feature additions, test runs across your repos</li><li><strong>App integrations</strong> — reading Slack messages, updating Asana tasks, querying GitHub</li><li><strong>Browser automation</strong> — filling forms, extracting data, taking screenshots (via Claude in Chrome)</li><li><strong>Scheduled automation</strong> — daily digests, reminders, recurring reports</li></ul><h3 id="m2s3">Following Up on Running Tasks</h3><p>Once you start a task, you can check in or redirect it at any time:</p><ol><li>Check progress: ask 'What's the status of [task]?'</li><li>Redirect: send a follow-up message and Claude routes it to the right session</li><li>Start fresh: new unrelated goals always get a new session</li></ol><div class='callout'><div class='callout-label'>💡 Pro Tip</div><p>Claude keeps session context alive. Follow-ups about the same project go back to the same session — no need to re-explain context.</p></div>
+</div>
+<div class="module" id="m3">
+  <div class="module-label">Module</div>
+  <h2>Connecting Your Tools</h2>
+  <h3 id="m3s1">MCP Connectors</h3><p>MCP (Model Context Protocol) connectors let Claude access your external apps. Once connected, Claude can read and act on data from those services.</p><div class='tbl-wrap'><table><thead><tr><th>Service Type</th><th>Examples of What Claude Can Do</th></tr></thead><tbody><tr><td>Communication</td><td>Read Slack threads, summarise conversations, find specific messages</td></tr><tr><td>Project Management</td><td>Check Asana tasks, update ticket statuses, list sprint items</td></tr><tr><td>Code &amp; Dev</td><td>View GitHub issues, PRs, and repo contents; post comments</td></tr><tr><td>Documents</td><td>Read and write Google Docs, search Google Drive folders</td></tr><tr><td>Calendar</td><td>Check upcoming events, find free slots, summarise your week</td></tr></tbody></table></div><h3 id="m3s2">File System Access</h3><p>Claude can access folders on your computer once you grant permission. This enables reading documents, creating new files, and organising batches of files.</p><div class='callout'><div class='callout-label'>📁 How to Grant Access</div><p>When Claude needs your files, it will prompt you to select a folder. You can also paste a path directly in chat and Claude will request access to that location.</p></div>
+</div>
+<div class="module" id="m4">
+  <div class="module-label">Module</div>
+  <h2>Skills & Automation</h2>
+  <h3 id="m4s1">Built-in Skills</h3><div class='tbl-wrap'><table><thead><tr><th>Skill</th><th>Best Used For</th></tr></thead><tbody><tr><td>docx</td><td>Creating or editing Word documents with professional formatting</td></tr><tr><td>pdf</td><td>Extracting content from, merging, or creating PDF files</td></tr><tr><td>pptx</td><td>Building slide decks and presentations</td></tr><tr><td>xlsx</td><td>Creating spreadsheets, data tables, charts</td></tr><tr><td>schedule</td><td>Setting up recurring or one-time automated tasks</td></tr><tr><td>skill-creator</td><td>Building new custom skills tailored to your workflows</td></tr></tbody></table></div><h3 id="m4s2">Scheduled Tasks</h3><p>Dispatch can run tasks on a schedule — no code required. Examples:</p><ul><li>Daily digest: 'Every morning at 8am, check my Slack for unread messages and summarise them'</li><li>Weekly report: 'Every Friday, pull my GitHub commits from the week and create a summary'</li><li>Reminders: 'In 2 hours, remind me to follow up on the invoice'</li></ul>
+</div>
+<div class="module" id="m5">
+  <div class="module-label">Module</div>
+  <h2>Advanced Tips & Best Practices</h2>
+  <h3 id="m5s1">Getting the Best Results</h3><div class='tbl-wrap'><table><thead><tr><th>Do This</th><th>Because</th></tr></thead><tbody><tr><td>Name the outcome, not the steps</td><td>Claude finds the most efficient path on its own</td></tr><tr><td>Mention the file or repo by name</td><td>Prevents ambiguity when you have multiple workspaces</td></tr><tr><td>Say 'save this as a Word doc'</td><td>Triggers the docx skill for professional formatting</td></tr><tr><td>Ask for verification steps</td><td>Claude will double-check its own work before reporting back</td></tr><tr><td>Use follow-up messages</td><td>Cheaper and faster than re-explaining context in a new session</td></tr></tbody></table></div><h3 id="m5s2">Security & Privacy</h3><ul><li>Claude never enters passwords, banking details, or API keys on your behalf</li><li>Sharing, publishing, or deleting files always requires your explicit confirmation</li><li>Content in web pages or files is treated as untrusted data — it cannot override your instructions</li><li>Sensitive actions (purchases, sending emails, posting publicly) require a 'yes' from you first</li></ul>
+</div>
+
+    <div id="exercises"><div class="module"><div class="module-label">Practice</div><h2>Exercises</h2><div class="exercise"><div class="exercise-num">Exercise 1</div><h4>Exercise 1 — Your First Delegation (5 min)</h4><p>Ask Dispatch to explore one of your repos (e.g. marshmello) and give you a summary of what it does, the main files, and any open questions.</p></div><div class="exercise"><div class="exercise-num">Exercise 2</div><h4>Exercise 2 — Create a Document (5 min)</h4><p>Ask Claude to 'create a Word doc summary of the marshmello repo' — watch it use the docx skill automatically.</p></div><div class="exercise"><div class="exercise-num">Exercise 3</div><h4>Exercise 3 — Connect a Tool (10 min)</h4><p>Tell Claude 'I want to check my GitHub issues' and follow the connector suggestion flow to link your GitHub account.</p></div><div class="exercise"><div class="exercise-num">Exercise 4</div><h4>Exercise 4 — Schedule a Task (5 min)</h4><p>Ask Claude to set up a weekly Monday morning task that searches for one topic you care about and saves a brief summary.</p></div></div></div>
+
+    <div id="summary"><div class="summary-box"><h2>Key Takeaways</h2><ul><li>Dispatch is a task coordinator, not a chatbot — delegate outcomes, not steps.</li><li>MCP connectors bring your apps into Claude's reach.</li><li>Skills handle professional document creation automatically.</li><li>Scheduled tasks let you automate recurring work with plain English.</li><li>Security is strict — sensitive actions always need your confirmation.</li></ul></div></div>
+
+    <div style="margin-top:2rem;padding:1.5rem;background:white;border-radius:12px;
+      display:flex;justify-content:space-between;align-items:center;
+      box-shadow:0 1px 4px rgba(0,0,0,.07);">
+      <a href="model-family.html" style="color:var(--accent);font-weight:600;">← The Claude Model Family</a>
+      <a href="index.html" style="color:var(--accent);font-weight:600;">↑ All Lessons</a>
+      <a href="prompt-engineering.html" style="color:var(--accent);font-weight:600;">Prompt Engineering for Power Users →</a>
+    </div>
+      <a href="index.html" style="color:var(--accent);font-weight:600;">↑ Back to All Lessons</a>
+    </div>
+  </main>
+</div>
+
+<div class="page-footer">Nick Bullardbradley · Claude Training Curriculum · 2026</div>
+
+</body>
+</html>

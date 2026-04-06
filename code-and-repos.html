@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Working With Code and Repos — Claude Training</title>
+<style>
+:root { --accent:#1F7A6E; --light:#E0F2EE; --dark:#0A3B35; }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #1a1a1a; background: #f8f9fa; line-height: 1.7; font-size: 16px; }
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* TOPBAR */
+.topbar { background: var(--accent); color: white; padding: 0 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 56px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+.topbar-left { display: flex; align-items: center; gap: 1rem; }
+.topbar-logo { font-weight: 700; font-size: 1.1rem; letter-spacing: .5px; }
+.topbar-sep { opacity: .4; }
+.topbar-title { font-size: .9rem; opacity: .9; }
+.topbar-home { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+  color: white; padding: .35rem .9rem; border-radius: 6px; font-size: .85rem;
+  cursor: pointer; transition: background .2s; white-space: nowrap; }
+.topbar-home:hover { background: rgba(255,255,255,.25); text-decoration: none; }
+
+/* HERO */
+.hero { background: linear-gradient(135deg, var(--dark) 0%, var(--accent) 100%);
+  color: white; padding: 3.5rem 2rem 2.5rem; text-align: center; }
+.hero-label { font-size: .8rem; text-transform: uppercase; letter-spacing: 2px;
+  opacity: .7; margin-bottom: .5rem; }
+.hero-num { font-size: 1rem; opacity: .8; margin-bottom: .25rem; }
+.hero-title { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; margin-bottom: .5rem; }
+.hero-sub { font-size: 1.05rem; opacity: .8; margin-bottom: 1.5rem; }
+.hero-pills { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+.pill { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+  padding: .3rem .85rem; border-radius: 20px; font-size: .82rem; }
+
+/* LAYOUT */
+.layout { display: grid; grid-template-columns: 260px 1fr; max-width: 1100px;
+  margin: 2rem auto; gap: 2rem; padding: 0 1.5rem 4rem; }
+@media(max-width:768px){.layout{grid-template-columns:1fr;}.sidenav{display:none;}}
+
+/* SIDENAV */
+.sidenav { position: sticky; top: 72px; align-self: start;
+  background: white; border-radius: 12px; padding: 1.25rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08); max-height: calc(100vh - 90px); overflow-y: auto; }
+.sidenav-title { font-size: .7rem; text-transform: uppercase; letter-spacing: 1.5px;
+  color: #888; margin-bottom: .75rem; font-weight: 600; }
+.sidenav ul { list-style: none; }
+.sidenav li { margin-bottom: .1rem; }
+.sidenav a { display: block; padding: .4rem .75rem; border-radius: 6px; font-size: .875rem;
+  color: #444; transition: all .15s; }
+.sidenav a:hover { background: var(--light); color: var(--accent); text-decoration: none; }
+.sidenav .mod-link { font-weight: 600; color: #222; }
+.sidenav .sub-link { padding-left: 1.25rem; font-size: .83rem; color: #666; }
+
+/* CONTENT */
+.content { min-width: 0; }
+.module { background: white; border-radius: 12px; padding: 2rem 2.25rem;
+  margin-bottom: 1.75rem; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+.module-label { font-size: .7rem; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--accent); font-weight: 700; margin-bottom: .25rem; }
+.module h2 { font-size: 1.4rem; font-weight: 700; color: var(--dark); margin-bottom: 1rem;
+  padding-bottom: .6rem; border-bottom: 2px solid var(--light); }
+.module h3 { font-size: 1.05rem; font-weight: 700; color: var(--accent);
+  margin: 1.5rem 0 .6rem; }
+.module p { margin-bottom: .85rem; color: #333; }
+.module ul, .module ol { padding-left: 1.4rem; margin-bottom: .85rem; }
+.module li { margin-bottom: .4rem; color: #333; }
+
+/* CALLOUT */
+.callout { background: var(--light); border-left: 4px solid var(--accent);
+  border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; margin: 1.25rem 0; }
+.callout-label { font-weight: 700; font-size: .9rem; color: var(--dark); margin-bottom: .4rem; }
+.callout p { margin-bottom: 0; font-size: .92rem; }
+
+/* TABLE */
+.tbl-wrap { overflow-x: auto; margin: 1.25rem 0; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+thead tr { background: var(--accent); color: white; }
+thead th { padding: .65rem 1rem; text-align: left; font-weight: 600; }
+tbody tr:nth-child(odd) { background: var(--light); }
+tbody tr:nth-child(even) { background: white; }
+tbody td { padding: .55rem 1rem; border-bottom: 1px solid #e8e8e8; vertical-align: top; }
+tbody td:first-child { font-weight: 600; }
+
+/* EXERCISE */
+.exercise { border: 2px solid var(--light); border-radius: 10px;
+  padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+.exercise-num { font-size: .75rem; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--accent); font-weight: 700; margin-bottom: .3rem; }
+.exercise h4 { font-size: 1rem; font-weight: 700; margin-bottom: .5rem; color: var(--dark); }
+.exercise p { margin: 0; font-size: .92rem; }
+
+/* SUMMARY */
+.summary-box { background: linear-gradient(135deg, var(--dark), var(--accent));
+  color: white; border-radius: 12px; padding: 2rem; margin-top: 1.5rem; }
+.summary-box h2 { color: white; border-bottom-color: rgba(255,255,255,.2); }
+.summary-box ul { color: rgba(255,255,255,.9); }
+.summary-box li { margin-bottom: .5rem; }
+
+/* FOOTER */
+.page-footer { text-align: center; padding: 2rem; color: #888; font-size: .85rem; }
+
+/* INDEX SPECIFIC */
+.index-hero { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: white; padding: 4rem 2rem 3rem; text-align: center; }
+.index-hero h1 { font-size: clamp(2rem,5vw,3.2rem); font-weight: 800; margin-bottom: .75rem; }
+.index-hero p { font-size: 1.1rem; opacity: .8; max-width: 600px; margin: 0 auto 2rem; }
+.index-stats { display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; }
+.stat { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+  border-radius: 10px; padding: 1rem 2rem; text-align: center; }
+.stat-num { font-size: 2rem; font-weight: 800; }
+.stat-label { font-size: .8rem; opacity: .7; text-transform: uppercase; letter-spacing: 1px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr));
+  gap: 1.5rem; max-width: 1100px; margin: 3rem auto; padding: 0 1.5rem 4rem; }
+.card { background: white; border-radius: 14px; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08); transition: transform .2s, box-shadow .2s;
+  display: flex; flex-direction: column; }
+.card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.12); text-decoration: none; }
+.card-header { padding: 1.5rem; color: white; position: relative; overflow: hidden; }
+.card-header::after { content: attr(data-num); position: absolute; right: 1rem; top: 50%;
+  transform: translateY(-50%); font-size: 5rem; font-weight: 900;
+  opacity: .12; line-height: 1; }
+.card-num { font-size: .7rem; text-transform: uppercase; letter-spacing: 2px;
+  opacity: .8; margin-bottom: .3rem; }
+.card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: .4rem; }
+.card-sub { font-size: .85rem; opacity: .8; }
+.card-body { padding: 1.25rem 1.5rem; flex: 1; }
+.card-body p { font-size: .88rem; color: #555; margin-bottom: .75rem; }
+.card-pills { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
+.card-pill { background: #f0f0f0; color: #555; padding: .2rem .65rem;
+  border-radius: 12px; font-size: .75rem; }
+.card-footer { padding: .85rem 1.5rem; border-top: 1px solid #f0f0f0;
+  display: flex; align-items: center; justify-content: space-between; }
+.card-link { font-size: .85rem; font-weight: 600; }
+.card-arr { font-size: 1.1rem; transition: transform .2s; }
+.card:hover .card-arr { transform: translateX(4px); }
+
+.index-footer { text-align: center; padding: 3rem 1rem;
+  color: #888; font-size: .9rem; border-top: 1px solid #e8e8e8; }
+
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-logo">Claude Training</span>
+    <span class="topbar-sep">|</span>
+    <span class="topbar-title">Working With Code and Repos</span>
+  </div>
+  <a href="index.html" class="topbar-home">← All Lessons</a>
+</div>
+
+<div class="hero">
+  <div class="hero-label">Training Plan</div>
+  <div class="hero-num">Practical Skills</div>
+  <div class="hero-title">Working With Code and Repos</div>
+  <div class="hero-sub">AI-Assisted Development Without Losing Control</div>
+  <div class="hero-pills">
+    <span class="pill">⏱ ~2 hrs</span>
+    <span class="pill">📊 Intermediate–Advanced</span>
+    <span class="pill">Self-paced</span>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidenav">
+    <div class="sidenav-title">Contents</div>
+    <ul>
+      <li><a href="#overview" class="mod-link">Overview</a></li>
+      <li><a href="#m1" class="mod-link">Choosing the Right Agent</a><ul><li><a href="#m1s1" class="sub-link">The Four Dev Agent Types</a></li></ul></li><li><a href="#m2" class="mod-link">Git Worktrees and Safety</a><ul><li><a href="#m2s1" class="sub-link">What Is a Worktree?</a></li><li><a href="#m2s2" class="sub-link">The Worktree Workflow</a></li></ul></li><li><a href="#m3" class="mod-link">Prompting Code Tasks Effectively</a><ul><li><a href="#m3s1" class="sub-link">Anatomy of a Good Code Task Prompt</a></li><li><a href="#m3s2" class="sub-link">Common Code Task Patterns</a></li></ul></li><li><a href="#m4" class="mod-link">Reviewing Claude's Changes</a><ul><li><a href="#m4s1" class="sub-link">The Code Review Mindset</a></li><li><a href="#m4s2" class="sub-link">Asking Claude to Review Its Own Work</a></li></ul></li><li><a href="#m5" class="mod-link">Testing and CI Integration</a><ul><li><a href="#m5s1" class="sub-link">Telling Claude About Your Test Setup</a></li></ul></li><li><a href="#m6" class="mod-link">Building a Sustainable Dev Workflow</a><ul><li><a href="#m6s1" class="sub-link">The Recommended Workflow</a></li><li><a href="#m6s2" class="sub-link">What to Delegate vs. Keep</a></li></ul></li>
+      <li><a href="#exercises" class="mod-link">Exercises</a></li>
+      <li><a href="#summary" class="mod-link">Key Takeaways</a></li>
+    </ul>
+    <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #eee;">
+      <div style="display:flex;flex-direction:column;gap:.5rem;"><a href="prompt-engineering.html">← Prompt Engineering for Power Users</a><a href="documents.html">Data, Files & Document Intelligence →</a></div>
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="module" id="overview">
+      <div class="module-label">Overview</div>
+      <h2>What You Will Learn</h2>
+      <p>This lesson is a deep dive on using Claude for software development. You will learn when to use each agent type, how git worktrees keep you safe, how to review Claude's changes effectively, and how to build a development workflow that accelerates your output without introducing risk.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem;">
+        <span class="pill">Choosing the right agent for each dev task</span><span class="pill">How worktrees work and why they matter</span><span class="pill">Reviewing and merging Claude's changes safely</span><span class="pill">Effective code task prompting</span><span class="pill">Testing and CI integration</span><span class="pill">Building a dev workflow that scales</span>
+      </div>
+    </div>
+
+    
+<div class="module" id="m1">
+  <div class="module-label">Module</div>
+  <h2>Choosing the Right Agent</h2>
+  <h3 id="m1s1">The Four Dev Agent Types</h3><div class='tbl-wrap'><table><thead><tr><th>Agent Type</th><th>Best For</th><th>How to Invoke</th></tr></thead><tbody><tr><td>Explore</td><td>Quick codebase questions: 'where is X defined?', 'what does Y do?'</td><td>Ask Dispatch to explore the repo</td></tr><tr><td>Plan</td><td>Architecture decisions before writing any code</td><td>Ask Dispatch to plan [feature/change]</td></tr><tr><td>Code Task</td><td>Actual file modifications, bug fixes, new features</td><td>Ask Dispatch to open a code session</td></tr><tr><td>General Purpose</td><td>Research, documentation, explaining concepts</td><td>Any Dispatch message</td></tr></tbody></table></div><div class='callout'><div class='callout-label'>🧭 Rule of Thumb</div><p>Explore first, Plan if needed, then Code. Skipping straight to a code task on an unfamiliar codebase produces worse results.</p></div>
+</div>
+<div class="module" id="m2">
+  <div class="module-label">Module</div>
+  <h2>Git Worktrees and Safety</h2>
+  <h3 id="m2s1">What Is a Worktree?</h3><p>A git worktree is an isolated copy of your repository where Claude does all its work. It checks out a new branch automatically, so Claude's changes never touch your main branch until you explicitly merge them.</p><div class='tbl-wrap'><table><thead><tr><th>Without Worktree</th><th>With Worktree</th></tr></thead><tbody><tr><td>Claude edits files directly on your current branch</td><td>Claude works on a separate branch in a separate directory</td></tr><tr><td>You need to stash or commit your work first</td><td>Your work is completely unaffected</td></tr><tr><td>Mistakes are hard to undo cleanly</td><td>Abandon the worktree and nothing is lost</td></tr></tbody></table></div><h3 id="m2s2">The Worktree Workflow</h3><ol><li>You describe the task to Dispatch</li><li>Dispatch starts a code session on a new git branch in a worktree</li><li>Claude explores, plans, and makes changes in that isolated environment</li><li>Claude runs tests (if available) and reports back</li><li>You review the diff before deciding to merge</li><li>You merge, or ask for revisions, or abandon the branch entirely</li></ol><div class='callout'><div class='callout-label'>🔒 Safety Guarantee</div><p>If Claude's code task session is abandoned or produces bad results, zero changes are made to your working tree or main branch.</p></div>
+</div>
+<div class="module" id="m3">
+  <div class="module-label">Module</div>
+  <h2>Prompting Code Tasks Effectively</h2>
+  <h3 id="m3s1">Anatomy of a Good Code Task Prompt</h3><p>A well-structured code task prompt has four parts:</p><ol><li><strong>What:</strong> the specific change or feature to implement</li><li><strong>Where:</strong> the file(s) or area of the codebase affected</li><li><strong>Context:</strong> any constraints, patterns to follow, or existing code to be aware of</li><li><strong>Verification:</strong> how Claude should confirm the change works</li></ol><div class='callout'><div class='callout-label'>✅ Strong Code Task Prompt</div><p>What: Add input validation to the user registration endpoint<br>Where: src/api/auth.py, the register() function<br>Context: We use Pydantic for validation elsewhere. Follow the same pattern. Raise a 422 with a clear error message on failure.<br>Verification: Run the existing test suite and confirm no tests fail. If there are no tests for this function, write one.</p></div><h3 id="m3s2">Common Code Task Patterns</h3><div class='tbl-wrap'><table><thead><tr><th>Task Type</th><th>How to Phrase It</th></tr></thead><tbody><tr><td>Bug fix</td><td>'Fix the bug where [behaviour] happens when [condition]'</td></tr><tr><td>New feature</td><td>'Add [feature] to [location]. Follow [pattern] from [example file]'</td></tr><tr><td>Refactor</td><td>'Refactor [file/function] to [goal]. Do not change behaviour.'</td></tr><tr><td>Test coverage</td><td>'Write unit tests for [function/class]. Cover happy path, edge cases, errors'</td></tr><tr><td>Code review</td><td>'Review [file] for bugs, code smells, and security issues. Be specific.'</td></tr></tbody></table></div>
+</div>
+<div class="module" id="m4">
+  <div class="module-label">Module</div>
+  <h2>Reviewing Claude's Changes</h2>
+  <h3 id="m4s1">The Code Review Mindset</h3><p>Treat every Claude-generated diff as you would a pull request from a junior developer: review it thoroughly before merging.</p><div class='tbl-wrap'><table><thead><tr><th>Review Dimension</th><th>What to Check</th></tr></thead><tbody><tr><td>Correctness</td><td>Does the code do what was asked? Are there edge cases it misses?</td></tr><tr><td>Style</td><td>Does it match the codebase conventions?</td></tr><tr><td>Tests</td><td>Did Claude write or update tests? Do they cover the important cases?</td></tr><tr><td>Side effects</td><td>Does the change affect any other part of the system?</td></tr><tr><td>Security</td><td>Are there any new attack surfaces? Are inputs validated?</td></tr></tbody></table></div><h3 id="m4s2">Asking Claude to Review Its Own Work</h3><ul><li>'Review the changes you made. What could go wrong?'</li><li>'Are there any edge cases your implementation does not handle?'</li><li>'Does this code follow the patterns used elsewhere in the codebase?'</li></ul>
+</div>
+<div class="module" id="m5">
+  <div class="module-label">Module</div>
+  <h2>Testing and CI Integration</h2>
+  <h3 id="m5s1">Telling Claude About Your Test Setup</h3><p>Claude will run whatever test commands you tell it to. Be explicit:</p><ul><li>'Run tests with: pytest tests/ -v'</li><li>'Run the linter with: flake8 src/'</li><li>'Build with: npm run build'</li></ul><div class='callout'><div class='callout-label'>✅ Best Practice</div><p>Include your test command in every code task prompt. 'Implement X. Run the test suite with [command] and fix any failures before reporting back.' This forces verification before Claude delivers the result.</p></div>
+</div>
+<div class="module" id="m6">
+  <div class="module-label">Module</div>
+  <h2>Building a Sustainable Dev Workflow</h2>
+  <h3 id="m6s1">The Recommended Workflow</h3><ol><li><strong>Explore:</strong> understand the relevant area of the codebase</li><li><strong>Plan:</strong> get an implementation plan for non-trivial changes</li><li><strong>Code:</strong> run the code task with a well-specified prompt</li><li><strong>Verify:</strong> review the diff and ask Claude to critique its own work</li><li><strong>Test:</strong> confirm tests pass</li><li><strong>Merge:</strong> bring the changes into your main branch</li></ol><h3 id="m6s2">What to Delegate vs. Keep</h3><div class='tbl-wrap'><table><thead><tr><th>Delegate to Claude</th><th>Keep for Yourself</th></tr></thead><tbody><tr><td>Boilerplate and scaffolding</td><td>Architecture decisions affecting the whole system</td></tr><tr><td>Test writing for existing code</td><td>Defining what counts as correct behaviour</td></tr><tr><td>Documentation and docstrings</td><td>Security and privacy reviews</td></tr><tr><td>Repetitive refactoring</td><td>Code that touches sensitive data or auth</td></tr><tr><td>Debugging obscure errors</td><td>Final merge and deployment decisions</td></tr></tbody></table></div>
+</div>
+
+    <div id="exercises"><div class="module"><div class="module-label">Practice</div><h2>Exercises</h2><div class="exercise"><div class="exercise-num">Exercise 1</div><h4>Exercise 1 — Explore a Repo (10 min)</h4><p>Ask Dispatch to run an Explore agent on one of your repos. Ask: 'What are the main entry points, key modules, and any open questions about the architecture?' Review the output for accuracy.</p></div><div class="exercise"><div class="exercise-num">Exercise 2</div><h4>Exercise 2 — Plan Before Coding (15 min)</h4><p>Pick a small feature you have been meaning to add. Ask the Plan agent to design an implementation approach. Review the plan: does it match how you would approach it?</p></div><div class="exercise"><div class="exercise-num">Exercise 3</div><h4>Exercise 3 — Run a Code Task (20 min)</h4><p>Using the strong prompt template from Module 3, start a code task on a real issue or small feature. Include your test command. Review the diff before merging.</p></div><div class="exercise"><div class="exercise-num">Exercise 4</div><h4>Exercise 4 — Self-Review Loop (15 min)</h4><p>After the code task completes, ask Claude: 'Review your changes. What could go wrong, and what edge cases are missing?' Apply any identified fixes.</p></div></div></div>
+
+    <div id="summary"><div class="summary-box"><h2>Key Takeaways</h2><ul><li>Use Explore and Plan before coding on unfamiliar code.</li><li>Worktrees keep your main branch safe — always.</li><li>Good code task prompts include what, where, context, and how to verify.</li><li>Review every diff like a PR from a junior dev.</li><li>Ask Claude to critique its own work before you review.</li><li>Test commands belong in every code task prompt.</li></ul></div></div>
+
+    <div style="margin-top:2rem;padding:1.5rem;background:white;border-radius:12px;
+      display:flex;justify-content:space-between;align-items:center;
+      box-shadow:0 1px 4px rgba(0,0,0,.07);">
+      <a href="prompt-engineering.html" style="color:var(--accent);font-weight:600;">← Prompt Engineering for Power Users</a>
+      <a href="index.html" style="color:var(--accent);font-weight:600;">↑ All Lessons</a>
+      <a href="documents.html" style="color:var(--accent);font-weight:600;">Data, Files & Document Intelligence →</a>
+    </div>
+      <a href="index.html" style="color:var(--accent);font-weight:600;">↑ Back to All Lessons</a>
+    </div>
+  </main>
+</div>
+
+<div class="page-footer">Nick Bullardbradley · Claude Training Curriculum · 2026</div>
+
+</body>
+</html>
