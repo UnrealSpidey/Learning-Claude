@@ -7,16 +7,17 @@ A self-paced HTML curriculum for mastering Claude Desktop, Dispatch, agents, and
 All content is static HTML — open `index.html` in a browser to start. Each lesson page has a sticky sidebar for navigation.
 
 ```
-index.html                  # Course home — all tracks and lessons
-model-family.html           # The Claude Model Family
-dispatch.html               # Claude Desktop & Dispatch
-prompt-engineering.html     # Prompt Engineering for Power Users
-code-and-repos.html         # Working With Code and Repos
-documents.html              # Data, Files & Document Intelligence
-automation-stack.html       # Building a Personal Automation Stack
-mcp-tools.html              # MCP & Custom Tool Integration
-agents.html                 # Creating & Leveraging Agents
-evaluating-outputs.html     # Evaluating & Debugging AI Outputs
+index.html                          # Course home — all tracks and lessons
+lessons/
+  model-family.html                 # The Claude Model Family
+  dispatch.html                     # Claude Desktop & Dispatch
+  prompt-engineering.html           # Prompt Engineering for Power Users
+  code-and-repos.html               # Working With Code and Repos
+  documents.html                    # Data, Files & Document Intelligence
+  automation-stack.html             # Building a Personal Automation Stack
+  mcp-tools.html                    # MCP & Custom Tool Integration
+  agents.html                       # Creating & Leveraging Agents
+  evaluating-outputs.html           # Evaluating & Debugging AI Outputs
 ```
 
 ## Tracks
@@ -38,4 +39,4 @@ evaluating-outputs.html     # Evaluating & Debugging AI Outputs
 
 ## Adding a Lesson
 
-Create a slug-named `.html` file and add it to the appropriate track section in `index.html`.
+Create a slug-named `.html` file in `lessons/` and add it to the appropriate track section in `index.html`.
